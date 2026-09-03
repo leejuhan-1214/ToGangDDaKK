@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SDG 15 사막화 위험 탐지와 토지복원 의사결정을 위한 위성 데이터 기반 프로토타입">
+  <meta name="theme-color" content="#112c25">
+  <title>LAND:15 — 사막화 대응 의사결정 랩</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#analysis-map">분석 지도로 바로가기</a>
+
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="LAND 15 홈">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 40 40"><path d="M8 27c8-1 10-7 12-17 7 6 10 12 7 18-3 7-13 7-19-1Z"/><path d="M11 31c5-7 10-11 17-15"/></svg>
+      </span>
+      <span>
+        <strong>LAND:15</strong>
+        <small>Desertification Decision Lab</small>
+      </span>
+    </a>
+
+    <nav class="main-nav" aria-label="주요 메뉴">
+      <a class="active" href="#analysis-map">분석 지도</a>
+      <a href="#restoration">복원 계획</a>
+      <a href="#methodology">방법론</a>
+    </nav>
+
+    <div class="top-actions">
+      <span class="prototype-badge">PROTOTYPE</span>
+      <button class="icon-button" id="info-button" aria-label="프로젝트 정보 보기">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7.2v.2"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro-band" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow"><span></span> UN SDG 15.3 · 토지 황폐화 중립</p>
+        <h1 id="page-title">사막화의 징후를 찾고,<br><em>복원의 다음 지점</em>을 계산합니다.</h1>
+      </div>
+      <div class="intro-copy">
+        <p>위성 관측 지표와 공간 알고리즘을 결합해 위험을 분류하고, 제한된 예산 안에서 복원 우선지역과 거점 연결망을 제안합니다.</p>
+        <span class="data-notice"><i></i> 현재 화면은 교육용 모의 데이터입니다</span>
+      </div>
+    </section>
+
+    <section class="workspace" id="analysis-map" aria-label="사막화 위험 분석 도구">
+      <aside class="control-panel panel">
+        <div class="panel-heading">
+          <div>
+            <span class="step-number">01</span>
+            <h2>분석 조건</h2>
+          </div>
+          <button class="text-button" id="reset-button">초기화</button>
+        </div>
+
+        <div class="form-group">
+          <label for="region-select">대상 지역</label>
+          <div class="select-wrap">
+            <select id="region-select">
+              <option value="gobi">몽골 남부 · 고비 전이지대</option>
+              <option value="sahel">사헬 서부 · 세네갈 북부</option>
+              <option value="aral">중앙아시아 · 아랄해 동부</option>
+            </select>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="start-date">비교 시작</label>
+            <input type="month" id="start-date" value="2021-08">
+          </div>
+          <div class="form-group">
+            <label for="end-date">최근 관측</label>
+            <input type="month" id="end-date" value="2026-08">
+          </div>
+        </div>
+
+        <div class="source-card">
+          <div class="source-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 17.5 12 4l8 13.5M7 14h10M9.7 9.5h4.6M5 20h14"/></svg>
+          </div>
+          <div>
+            <span>위성 데이터</span>
+            <strong>Sentinel-2 L2A</strong>
+            <small>10–20 m · 5일 재방문</small>
+          </div>
+          <span class="status-dot" title="데이터 소스 준비됨"></span>
+        </div>
+
+        <div class="slider-group">
+          <div class="label-line">
+            <label for="threshold-range">고위험 판정 기준</label>
+            <output id="threshold-output" for="threshold-range">65%</output>
+          </div>
+          <input type="range" id="threshold-range" min="45" max="80" value="65" step="1">
+          <div class="range-labels"><span>민감하게</span><span>엄격하게</span></div>
+        </div>
+
+        <div class="slider-group budget-group">
+          <div class="label-line">
+            <label for="budget-range">가상 복원 예산</label>
+            <output id="budget-output" for="budget-range">30억 원</output>
+          </div>
+          <input type="range" id="budget-range" min="10" max="70" value="30" step="5">
+          <div class="range-labels"><span>10억</span><span>70억</span></div>
+        </div>
+
+        <fieldset class="layer-control">
+          <legend>지도 레이어</legend>
+          <label><input type="checkbox" data-layer="risk" checked><span><i class="layer-icon risk-icon"></i>위험도 분류</span></label>
+          <label><input type="checkbox" data-layer="zones"><span><i class="layer-icon zone-icon"></i>보로노이 관리구역</span></label>
+          <label><input type="checkbox" data-layer="network"><span><i class="layer-icon network-icon"></i>프림 최소 연결망</span></label>
+          <label><input type="checkbox" data-layer="route"><span><i class="layer-icon route-icon"></i>A* 현장 경로</span></label>
+        </fieldset>
+
+        <button class="primary-button" id="run-analysis">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7M4 17h16M7 14l4-4 3 2 5-6"/></svg>
+          분석 다시 실행
+          <span>↗</span>
+        </button>
+        <p class="control-footnote">입력 조건은 브라우저에서만 계산되며 서버로 전송되지 않습니다.</p>
+      </aside>
+
+      <div class="map-panel panel">
+        <div class="map-toolbar">
+          <div>
+            <div class="map-title-line">
+              <h2 id="map-region-title">몽골 남부 · 고비 전이지대</h2>
+              <span class="live-chip"><i></i> 분석 완료</span>
+            </div>
+            <p id="map-coordinate">43.2°N–46.8°N · 101.0°E–108.7°E</p>
+          </div>
+          <div class="map-meta">
+            <span>관측 예시일</span>
+            <strong id="observed-date">2026.08.28</strong>
+          </div>
+        </div>
+
+        <div class="map-stage" id="map-stage">
+          <div class="map-label north-label">북부 초원 지대</div>
+          <div class="map-label desert-label">고비 사막 경계</div>
+          <svg id="risk-map" viewBox="0 0 960 620" role="img" aria-labelledby="map-title map-desc">
+            <title id="map-title">사막화 위험도 격자 지도</title>
+            <desc id="map-desc">각 격자를 선택해 나이브 베이즈 분류 결과와 환경지표를 확인할 수 있습니다.</desc>
+            <defs>
+              <linearGradient id="terrain-bg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#e9eadb"/>
+                <stop offset=".48" stop-color="#e4dfc8"/>
+                <stop offset="1" stop-color="#d7c9ac"/>
+              </linearGradient>
+              <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity=".2"/>
+              </filter>
+              <pattern id="map-grain" width="36" height="36" patternUnits="userSpaceOnUse">
+                <circle cx="4" cy="7" r=".8" fill="#6f765c" opacity=".14"/>
+                <circle cx="25" cy="28" r=".6" fill="#6f765c" opacity=".12"/>
+              </pattern>
+              <clipPath id="region-clip">
+                <path d="M70 140 128 75l126-28 99 34 97-36 127 39 92-5 106 61 66 112-29 106 22 94-90 66-124-2-111 48-119-26-119 19-92-74-83-25-30-111 24-91Z"/>
+              </clipPath>
+            </defs>
+            <rect width="960" height="620" fill="url(#terrain-bg)"/>
+            <rect width="960" height="620" fill="url(#map-grain)"/>
+            <g class="terrain-lines" opacity=".38">
+              <path d="M-20 110C135 180 194 66 343 142s236-21 337 48 183 20 309-9"/>
+              <path d="M-5 159c125 66 217-15 335 54s244-3 348 47 189 24 301 8"/>
+              <path d="M-17 441c126-48 204 43 343-6s241 25 371-18 184 16 287-22"/>
+              <path d="M36 492c122-49 193 34 318-13s224 22 332-19 193 10 274-29"/>
+            </g>
+            <path class="region-outline" d="M70 140 128 75l126-28 99 34 97-36 127 39 92-5 106 61 66 112-29 106 22 94-90 66-124-2-111 48-119-26-119 19-92-74-83-25-30-111 24-91Z"/>
+            <g id="risk-cells" clip-path="url(#region-clip)"></g>
+            <g id="zone-cells" clip-path="url(#region-clip)"></g>
+            <g id="network-layer"></g>
+            <g id="route-layer"></g>
+            <g id="site-layer"></g>
+            <g id="center-layer"></g>
+          </svg>
+
+          <div class="map-tooltip" id="map-tooltip" role="status" aria-live="polite"></div>
+
+          <div class="map-legend" id="map-legend">
+            <span>사막화 위험</span>
+            <div><i class="normal"></i>안정</div>
+            <div><i class="attention"></i>주의</div>
+            <div><i class="high"></i>위험</div>
+            <div><i class="critical"></i>심각</div>
+          </div>
+
+          <div class="map-controls" aria-label="지도 보기 조절">
+            <button id="zoom-in" aria-label="지도 확대">+</button>
+            <button id="zoom-out" aria-label="지도 축소">−</button>
+            <button id="zoom-reset" aria-label="지도 보기 초기화">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v3M12 17v3M4 12h3M17 12h3"/><circle cx="12" cy="12" r="5"/></svg>
+            </button>
+          </div>
+          <div class="scale-bar"><span></span><small>50 km</small></div>
+        </div>
+
+        <div class="map-caption">
+          <span><kbd>클릭</kbd> 격자 상세 분석</span>
+          <span><kbd>레이어</kbd> 공간 알고리즘 비교</span>
+          <p>공간 해상도 8 × 8 km · 월별 중앙값 합성</p>
+        </div>
+      </div>
+
+      <aside class="insight-panel panel" aria-live="polite">
+        <div class="panel-heading compact">
+          <div>
+            <span class="step-number">02</span>
+            <h2>분석 요약</h2>
+          </div>
+          <span class="model-chip">Gaussian NB</span>
+        </div>
+
+        <div class="risk-summary">
+          <div class="donut-wrap">
+            <svg class="donut" viewBox="0 0 100 100" aria-label="고위험 지역 비율">
+              <circle class="donut-bg" cx="50" cy="50" r="41"/>
+              <circle class="donut-value" id="donut-value" cx="50" cy="50" r="41"/>
+            </svg>
+            <div><strong id="risk-percent">32%</strong><span>고위험 이상</span></div>
+          </div>
+          <div class="summary-numbers">
+            <span>추정 면적</span>
+            <strong id="risk-area">18,432 <small>km²</small></strong>
+            <em id="risk-change">이전 기간 대비 +4.7%</em>
+          </div>
+        </div>
+
+        <div class="class-bars" aria-label="위험등급별 면적 비율">
+          <div><span><i class="normal"></i>안정</span><strong id="normal-label">26%</strong></div>
+          <div class="bar"><i id="normal-bar"></i></div>
+          <div><span><i class="attention"></i>주의</span><strong id="attention-label">42%</strong></div>
+          <div class="bar"><i id="attention-bar"></i></div>
+          <div><span><i class="high"></i>위험</span><strong id="high-label">23%</strong></div>
+          <div class="bar"><i id="high-bar"></i></div>
+          <div><span><i class="critical"></i>심각</span><strong id="critical-label">9%</strong></div>
+          <div class="bar"><i id="critical-bar"></i></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="selected-cell">
+          <div class="section-title-line">
+            <h3>선택 격자 진단</h3>
+            <span id="cell-id">G-14</span>
+          </div>
+          <div class="cell-verdict">
+            <div>
+              <span>분류 결과</span>
+              <strong id="cell-class">위험</strong>
+            </div>
+            <div>
+              <span>모델 확신도</span>
+              <strong id="cell-confidence">84%</strong>
+            </div>
+          </div>
+          <div class="metric-list">
+            <div><span>NDVI</span><strong id="ndvi-value">0.24</strong><em id="ndvi-trend">−18%</em></div>
+            <div><span>월 강수량</span><strong id="rainfall-value">42 mm</strong><em id="rainfall-trend">−12%</em></div>
+            <div><span>토양 수분</span><strong id="moisture-value">11%</strong><em id="moisture-trend">−7%</em></div>
+            <div><span>지표 온도</span><strong id="temperature-value">34.2°C</strong><em class="warm" id="temperature-trend">+2.1°C</em></div>
+          </div>
+        </div>
+
+        <div class="reason-card">
+          <div class="section-title-line">
+            <h3>판정에 기여한 요인</h3>
+            <button class="help-dot" aria-label="기여도 설명" title="각 지표가 위험 판정에 미친 상대적 영향입니다">?</button>
+          </div>
+          <div id="factor-list"></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="restoration-section" id="restoration" aria-labelledby="restoration-title">
+      <div class="section-intro">
+        <p class="eyebrow"><span></span> FROM SIGNAL TO ACTION</p>
+        <h2 id="restoration-title">탐지에서 끝내지 않고<br><em>복원 행동까지 연결합니다.</em></h2>
+        <p>하나의 예측 결과를 네 가지 알고리즘이 이어받습니다. 알고리즘마다 담당하는 질문이 다릅니다.</p>
+      </div>
+
+      <div class="algorithm-flow">
+        <article class="algorithm-card active" data-focus-layer="risk">
+          <span class="algorithm-index">01</span>
+          <div class="algorithm-icon naive" aria-hidden="true">P</div>
+          <p>어디가 위험한가?</p>
+          <h3>나이브 베이즈</h3>
+          <span>위험도 확률 분류</span>
+        </article>
+        <i class="flow-arrow">→</i>
+        <article class="algorithm-card" data-focus-layer="zones">
+          <span class="algorithm-index">02</span>
+          <div class="algorithm-icon voronoi" aria-hidden="true"><i></i><i></i><i></i></div>
+          <p>누가 관리할 것인가?</p>
+          <h3>보로노이</h3>
+          <span>최근접 관리구역 배정</span>
+        </article>
+        <i class="flow-arrow">→</i>
+        <article class="algorithm-card" data-focus-layer="greedy">
+          <span class="algorithm-index">03</span>
+          <div class="algorithm-icon greedy" aria-hidden="true">₩</div>
+          <p>어디부터 복원할까?</p>
+          <h3>그리디</h3>
+          <span>비용 대비 효과 최적화</span>
+        </article>
+        <i class="flow-arrow">→</i>
+        <article class="algorithm-card" data-focus-layer="network">
+          <span class="algorithm-index">04</span>
+          <div class="algorithm-icon prim" aria-hidden="true"><i></i><i></i><i></i></div>
+          <p>거점을 어떻게 이을까?</p>
+          <h3>프림 + A*</h3>
+          <span>기반망·현장 경로 설계</span>
+        </article>
+      </div>
+
+      <div class="decision-board">
+        <div class="decision-heading">
+          <div>
+            <span class="step-number">03</span>
+            <h2>복원 우선순위 제안</h2>
+          </div>
+          <div class="budget-pill">예산 <strong id="board-budget">30억 원</strong></div>
+        </div>
+        <div class="decision-grid">
+          <div class="priority-list" id="priority-list"></div>
+          <div class="decision-impact">
+            <p>예상 복원 효과</p>
+            <strong id="restored-area">3,840 <small>ha</small></strong>
+            <div class="impact-track"><i id="impact-track"></i></div>
+            <div class="impact-stats">
+              <span><strong id="selected-count">4곳</strong> 선정 지역</span>
+              <span><strong id="people-impact">12.6천 명</strong> 영향 인구</span>
+              <span><strong id="budget-use">96%</strong> 예산 집행률</span>
+            </div>
+            <p class="decision-note">위험도 × 생태가치 × 주민영향을 비용으로 나눈 점수가 높은 순으로 선정합니다.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="method-section" id="methodology" aria-labelledby="method-title">
+      <div class="method-heading">
+        <div>
+          <p class="eyebrow light"><span></span> METHOD &amp; LIMITS</p>
+          <h2 id="method-title">모델의 답보다<br>근거와 한계를 함께 봅니다.</h2>
+        </div>
+        <p>좋은 환경 의사결정은 정확한 예측뿐 아니라 데이터의 시점, 오류 가능성, 지역 주민의 지식을 함께 고려해야 합니다.</p>
+      </div>
+      <div class="method-grid">
+        <article>
+          <span>INPUT</span>
+          <h3>6개 환경 지표</h3>
+          <p>NDVI, 식생 변화율, 강수량, 토양 수분, 지표 온도, 나지 비율을 사용합니다.</p>
+        </article>
+        <article>
+          <span>VALIDATION</span>
+          <h3>오차를 숨기지 않기</h3>
+          <p>혼동행렬·재현율·F1 점수로 고위험 지역을 놓치는 비율까지 함께 검증합니다.</p>
+        </article>
+        <article>
+          <span>CAUTION</span>
+          <h3>상관관계 ≠ 원인</h3>
+          <p>위성에서 보이는 식생 감소만으로 인간 활동이 원인이라고 단정하지 않습니다.</p>
+        </article>
+        <article>
+          <span>PARTICIPATION</span>
+          <h3>현장 지식과 결합</h3>
+          <p>최종 복원지는 생태조사와 주민 협의를 거쳐 결정해야 합니다.</p>
+        </article>
+      </div>
+      <div class="source-line">
+        <span>DATA REFERENCES</span>
+        <a href="https://sdgs.un.org/goals/goal15" target="_blank" rel="noopener">UN SDG 15 ↗</a>
+        <a href="https://developers.google.com/earth-engine/datasets/catalog/sentinel-2" target="_blank" rel="noopener">Sentinel-2 Catalog ↗</a>
+        <a href="https://www.usgs.gov/landsat-missions/landsat-normalized-difference-vegetation-index" target="_blank" rel="noopener">USGS NDVI ↗</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="brand footer-brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 40 40"><path d="M8 27c8-1 10-7 12-17 7 6 10 12 7 18-3 7-13 7-19-1Z"/><path d="M11 31c5-7 10-11 17-15"/></svg>
+      </span>
+      <span><strong>LAND:15</strong><small>SDG 15.3 EDUCATION PROTOTYPE</small></span>
+    </div>
+    <p>위성영상 × 확률과 통계 × 지구과학 × 세계지리 × 정보</p>
+    <span>2026 · Educational prototype</span>
+  </footer>
+
+  <dialog id="info-dialog">
+    <button class="dialog-close" aria-label="닫기">×</button>
+    <span class="dialog-kicker">ABOUT THIS PROTOTYPE</span>
+    <h2>LAND:15는 무엇인가요?</h2>
+    <p>UN SDG 15.3의 사막화 방지 목표를 교과 융합 프로젝트로 풀어낸 교육용 웹 프로토타입입니다.</p>
+    <ul>
+      <li><strong>확률과 통계</strong> — 베이즈 정리와 모델 평가</li>
+      <li><strong>지구과학</strong> — 위성 원격탐사와 기후·토양</li>
+      <li><strong>세계지리</strong> — 건조지역과 인간의 토지 이용</li>
+      <li><strong>정보</strong> — 분류·공간·최적화 알고리즘</li>
+    </ul>
+    <p class="dialog-notice">화면의 수치와 공간은 기능 시연을 위한 합성 데이터이며 실제 정책 결정에 사용할 수 없습니다.</p>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <span>✓</span>
+    <div><strong>분석이 갱신되었습니다</strong><small>새 조건으로 412개 격자를 다시 분류했습니다.</small></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
