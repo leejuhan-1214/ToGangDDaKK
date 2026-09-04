@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -73,6 +74,12 @@
           </div>
         </div>
 
+        <button class="area-button" id="area-select-button" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9V5h4M15 5h4v4M19 15v4h-4M9 19H5v-4"/></svg>
+          지도에서 분석 구역 지정
+        </button>
+        <p class="area-coordinates" id="area-coordinates">선택 범위 43.20–46.80°N · 101.00–108.70°E</p>
+
         <div class="form-row">
           <div class="form-group">
             <label for="start-date">비교 시작</label>
@@ -89,9 +96,9 @@
             <svg viewBox="0 0 24 24"><path d="M4 17.5 12 4l8 13.5M7 14h10M9.7 9.5h4.6M5 20h14"/></svg>
           </div>
           <div>
-            <span>위성 데이터</span>
-            <strong>Sentinel-2 L2A</strong>
-            <small>10–20 m · 5일 재방문</small>
+            <span>실제 위성영상 베이스맵</span>
+            <strong>Esri World Imagery</strong>
+            <small>촬영 시점·해상도는 지역별 상이</small>
           </div>
           <span class="status-dot" title="데이터 소스 준비됨"></span>
         </div>
@@ -146,46 +153,11 @@
         </div>
 
         <div class="map-stage" id="map-stage">
-          <div class="map-label north-label">북부 초원 지대</div>
-          <div class="map-label desert-label">고비 사막 경계</div>
-          <svg id="risk-map" viewBox="0 0 960 620" role="img" aria-labelledby="map-title map-desc">
-            <title id="map-title">사막화 위험도 격자 지도</title>
-            <desc id="map-desc">각 격자를 선택해 나이브 베이즈 분류 결과와 환경지표를 확인할 수 있습니다.</desc>
-            <defs>
-              <linearGradient id="terrain-bg" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#e9eadb"/>
-                <stop offset=".48" stop-color="#e4dfc8"/>
-                <stop offset="1" stop-color="#d7c9ac"/>
-              </linearGradient>
-              <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-                <feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity=".2"/>
-              </filter>
-              <pattern id="map-grain" width="36" height="36" patternUnits="userSpaceOnUse">
-                <circle cx="4" cy="7" r=".8" fill="#6f765c" opacity=".14"/>
-                <circle cx="25" cy="28" r=".6" fill="#6f765c" opacity=".12"/>
-              </pattern>
-              <clipPath id="region-clip">
-                <path d="M70 140 128 75l126-28 99 34 97-36 127 39 92-5 106 61 66 112-29 106 22 94-90 66-124-2-111 48-119-26-119 19-92-74-83-25-30-111 24-91Z"/>
-              </clipPath>
-            </defs>
-            <rect width="960" height="620" fill="url(#terrain-bg)"/>
-            <rect width="960" height="620" fill="url(#map-grain)"/>
-            <g class="terrain-lines" opacity=".38">
-              <path d="M-20 110C135 180 194 66 343 142s236-21 337 48 183 20 309-9"/>
-              <path d="M-5 159c125 66 217-15 335 54s244-3 348 47 189 24 301 8"/>
-              <path d="M-17 441c126-48 204 43 343-6s241 25 371-18 184 16 287-22"/>
-              <path d="M36 492c122-49 193 34 318-13s224 22 332-19 193 10 274-29"/>
-            </g>
-            <path class="region-outline" d="M70 140 128 75l126-28 99 34 97-36 127 39 92-5 106 61 66 112-29 106 22 94-90 66-124-2-111 48-119-26-119 19-92-74-83-25-30-111 24-91Z"/>
-            <g id="risk-cells" clip-path="url(#region-clip)"></g>
-            <g id="zone-cells" clip-path="url(#region-clip)"></g>
-            <g id="network-layer"></g>
-            <g id="route-layer"></g>
-            <g id="site-layer"></g>
-            <g id="center-layer"></g>
-          </svg>
-
-          <div class="map-tooltip" id="map-tooltip" role="status" aria-live="polite"></div>
+          <div id="satellite-map" role="application" aria-label="실제 위성영상 기반 사막화 분석 지도"></div>
+          <div class="selection-instruction" id="selection-instruction" role="status">
+            <strong>분석 구역 지정 중</strong>
+            <span>첫 번째 모서리를 지도에서 클릭하세요</span>
+          </div>
 
           <div class="map-legend" id="map-legend">
             <span>사막화 위험</span>
@@ -202,13 +174,12 @@
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v3M12 17v3M4 12h3M17 12h3"/><circle cx="12" cy="12" r="5"/></svg>
             </button>
           </div>
-          <div class="scale-bar"><span></span><small>50 km</small></div>
         </div>
 
         <div class="map-caption">
           <span><kbd>클릭</kbd> 격자 상세 분석</span>
           <span><kbd>레이어</kbd> 공간 알고리즘 비교</span>
-          <p>공간 해상도 8 × 8 km · 월별 중앙값 합성</p>
+          <p>위성 배경: Esri World Imagery · 위험도: 교육용 모의 분석</p>
         </div>
       </div>
 
@@ -417,6 +388,7 @@
     <div><strong>분석이 갱신되었습니다</strong><small>새 조건으로 412개 격자를 다시 분류했습니다.</small></div>
   </div>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="app.js"></script>
 </body>
 </html>
