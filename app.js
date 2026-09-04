@@ -1,7 +1,8 @@
 "use strict";
 
-const GRID_COLS = 20;
-const GRID_ROWS = 12;
+const GRID_COLS = 48;
+const GRID_ROWS = 32;
+const MAP_FIT_PADDING = [4, 4];
 
 const classInfo = [
   { label: "안정", color: "#5d9667" },
@@ -87,6 +88,17 @@ function seeded(row, col, salt = 0) {
   return value - Math.floor(value);
 }
 
+function gridRowLabel(row) {
+  let value = row + 1;
+  let label = "";
+  while (value > 0) {
+    value -= 1;
+    label = String.fromCharCode(65 + (value % 26)) + label;
+    value = Math.floor(value / 26);
+  }
+  return label;
+}
+
 function gaussianClassify(features) {
   const scores = model.map(({ mean, sd, prior }) => {
     let score = Math.log(prior);
@@ -147,7 +159,7 @@ function createCellData(row, col, bounds) {
     row, col, x: normalizedPoint.x, y: normalizedPoint.y, zone, ndvi, ndviTrend, rainfall, moisture,
     temperature, bareSoil, ecological, people, cost, riskScore, bounds: cellBounds,
     latlng: cellBounds.getCenter(), ...classification,
-    id: `${region.prefix}-${String.fromCharCode(65 + row)}${String(col + 1).padStart(2, "0")}`
+    id: `${region.prefix}-${gridRowLabel(row)}${String(col + 1).padStart(2, "0")}`
   };
 }
 
@@ -161,6 +173,8 @@ function initializeSatelliteMap() {
     zoomControl: false,
     minZoom: 2,
     maxZoom: 18,
+    zoomSnap: 0.1,
+    zoomDelta: 0.5,
     preferCanvas: true
   });
 
@@ -206,7 +220,7 @@ function renderMap({ fit = false } = {}) {
 
   const boundary = L.rectangle(state.analysisBounds, {
     color: "#d5ef6c",
-    weight: 2,
+    weight: 1.5,
     opacity: 0.95,
     fill: false,
     dashArray: "7 6",
@@ -219,11 +233,11 @@ function renderMap({ fit = false } = {}) {
       const cell = createCellData(row, col, state.analysisBounds);
       state.cells.push(cell);
       const rectangle = L.rectangle(cell.bounds, {
-        color: "rgba(255,255,255,.42)",
-        weight: 0.6,
-        opacity: 0.7,
+        color: "rgba(255,255,255,.24)",
+        weight: 0.28,
+        opacity: 0.46,
         fillColor: classInfo[cell.classIndex].color,
-        fillOpacity: 0.58,
+        fillOpacity: 0.56,
         bubblingMouseEvents: true
       });
       rectangle.bindTooltip(`<strong>${cell.id} · ${classInfo[cell.classIndex].label}</strong><br>위험확률 ${Math.round(cell.riskScore * 100)}% · NDVI ${cell.ndvi.toFixed(2)}`, { sticky: true });
@@ -250,7 +264,7 @@ function renderMap({ fit = false } = {}) {
   selectCell(suggested || state.cells[0]);
   updateAreaLabels();
   updateLayerVisibility();
-  if (fit) satelliteMap.fitBounds(state.analysisBounds, { padding: [22, 22], animate: false });
+  if (fit) satelliteMap.fitBounds(state.analysisBounds, { padding: MAP_FIT_PADDING, animate: false });
 }
 
 function renderCenters() {
@@ -327,11 +341,11 @@ function factorValues(cell) {
 function selectCell(cell) {
   if (!cell) return;
   if (state.selected?.layer) {
-    state.selected.layer.setStyle({ color: "rgba(255,255,255,.42)", weight: 0.6, opacity: 0.7 });
+    state.selected.layer.setStyle({ color: "rgba(255,255,255,.24)", weight: 0.28, opacity: 0.46 });
   }
   state.selected = cell;
   if (cell.layer) {
-    cell.layer.setStyle({ color: "#ffffff", weight: 3, opacity: 1 });
+    cell.layer.setStyle({ color: "#ffffff", weight: 2, opacity: 1 });
     cell.layer.bringToFront();
   }
 
@@ -660,7 +674,7 @@ function initializeEvents() {
 
   $("#zoom-in").addEventListener("click", () => satelliteMap?.zoomIn());
   $("#zoom-out").addEventListener("click", () => satelliteMap?.zoomOut());
-  $("#zoom-reset").addEventListener("click", () => satelliteMap?.fitBounds(state.analysisBounds, { padding: [22, 22] }));
+  $("#zoom-reset").addEventListener("click", () => satelliteMap?.fitBounds(state.analysisBounds, { padding: MAP_FIT_PADDING }));
 
   const sections = ["analysis-map", "restoration", "methodology"];
   const links = $$(".main-nav a");
