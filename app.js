@@ -1,7 +1,8 @@
 "use strict";
 
-const GRID_COLS = 48;
-const GRID_ROWS = 32;
+const GRID_COLS = 64;
+const GRID_ROWS = 48;
+const CA_GENERATIONS = 3;
 const MAP_FIT_PADDING = [4, 4];
 
 const classInfo = [
@@ -65,11 +66,15 @@ const state = {
   region: "gobi",
   threshold: 65,
   budget: 30,
+  focusBounds: null,
   analysisBounds: null,
   cellArea: 64,
   customArea: false,
   drawingArea: false,
-  areaPoints: []
+  areaPoints: [],
+  renderingMap: false,
+  suppressViewportSync: false,
+  viewportTimer: null
 };
 
 const mapLayers = {};
@@ -114,6 +119,61 @@ function gaussianClassify(features) {
   const probabilities = exponentials.map(value => value / total);
   const classIndex = probabilities.indexOf(Math.max(...probabilities));
   return { classIndex, probabilities, confidence: probabilities[classIndex] };
+}
+
+function riskClassFromScore(score) {
+  if (score < 0.22) return 0;
+  if (score < 0.46) return 1;
+  if (score < 0.70) return 2;
+  return 3;
+}
+
+function applyCellularAutomata(cells) {
+  const severitySeed = [0.12, 0.36, 0.64, 0.86];
+  let scores = cells.map(cell => clamp(
+    severitySeed[cell.classIndex] * 0.72 + cell.riskScore * 0.28,
+    0.02,
+    0.98
+  ));
+
+  for (let generation = 0; generation < CA_GENERATIONS; generation += 1) {
+    const nextScores = [...scores];
+    cells.forEach((cell, index) => {
+      const neighbors = [];
+      for (let rowOffset = -1; rowOffset <= 1; rowOffset += 1) {
+        for (let colOffset = -1; colOffset <= 1; colOffset += 1) {
+          if (rowOffset === 0 && colOffset === 0) continue;
+          const row = cell.row + rowOffset;
+          const col = cell.col + colOffset;
+          if (row < 0 || row >= GRID_ROWS || col < 0 || col >= GRID_COLS) continue;
+          neighbors.push(scores[row * GRID_COLS + col]);
+        }
+      }
+
+      const neighborMean = neighbors.reduce((sum, score) => sum + score, 0) / Math.max(1, neighbors.length);
+      const severeNeighbors = neighbors.filter(score => score >= 0.65).length;
+      const environmentalStress = clamp(
+        ((cell.bareSoil - 18) / 72 + (30 - cell.moisture) / 27 + (cell.temperature - 20) / 23) / 3,
+        0,
+        1
+      );
+      const spreadEffect = severeNeighbors >= 5 ? 0.035 : severeNeighbors <= 1 ? -0.012 : 0;
+      nextScores[index] = clamp(
+        scores[index] * 0.60 + neighborMean * 0.32 + environmentalStress * 0.08 + spreadEffect,
+        0.02,
+        0.98
+      );
+    });
+    scores = nextScores;
+  }
+
+  cells.forEach((cell, index) => {
+    cell.nbClassIndex = cell.classIndex;
+    cell.nbRiskScore = cell.riskScore;
+    cell.riskScore = scores[index];
+    cell.classIndex = riskClassFromScore(cell.riskScore);
+    cell.confidence = clamp(0.56 + Math.abs(cell.riskScore - 0.5) * 0.78, 0.56, 0.96);
+  });
 }
 
 function createCellData(row, col, bounds) {
@@ -195,7 +255,23 @@ function initializeSatelliteMap() {
   ["risk", "sites", "centers", "boundary", "temporary"].forEach(name => mapLayers[name].addTo(satelliteMap));
   L.control.scale({ imperial: false, position: "bottomright", maxWidth: 90 }).addTo(satelliteMap);
   satelliteMap.on("click", handleMapClick);
+  satelliteMap.on("moveend", scheduleViewportAnalysis);
+  satelliteMap.on("resize", scheduleViewportAnalysis);
   return true;
+}
+
+function copyBounds(bounds) {
+  return L.latLngBounds(bounds.getSouthWest(), bounds.getNorthEast());
+}
+
+function scheduleViewportAnalysis() {
+  if (!satelliteMap || state.drawingArea || state.renderingMap || state.suppressViewportSync) return;
+  window.clearTimeout(state.viewportTimer);
+  state.viewportTimer = window.setTimeout(() => {
+    if (state.drawingArea || state.renderingMap || state.suppressViewportSync) return;
+    state.analysisBounds = copyBounds(satelliteMap.getBounds());
+    renderMap();
+  }, 120);
 }
 
 function areaKm2(bounds) {
@@ -214,33 +290,46 @@ function centerToLatLng(center) {
 
 function renderMap({ fit = false } = {}) {
   if (!satelliteMap || !state.analysisBounds) return;
-  Object.values(mapLayers).forEach(layer => layer.clearLayers());
-  state.cells = [];
-  state.cellArea = areaKm2(state.analysisBounds) / (GRID_ROWS * GRID_COLS);
+  state.renderingMap = true;
+  if (fit) {
+    state.suppressViewportSync = true;
+    satelliteMap.fitBounds(state.focusBounds || state.analysisBounds, { padding: MAP_FIT_PADDING, animate: false });
+    state.analysisBounds = copyBounds(satelliteMap.getBounds());
+  }
 
-  const boundary = L.rectangle(state.analysisBounds, {
-    color: "#d5ef6c",
-    weight: 1.5,
-    opacity: 0.95,
-    fill: false,
-    dashArray: "7 6",
-    interactive: false
-  });
-  mapLayers.boundary.addLayer(boundary);
+  try {
+    Object.values(mapLayers).forEach(layer => layer.clearLayers());
+    state.cells = [];
+    state.selected = null;
+    state.cellArea = areaKm2(state.analysisBounds) / (GRID_ROWS * GRID_COLS);
 
-  for (let row = 0; row < GRID_ROWS; row += 1) {
-    for (let col = 0; col < GRID_COLS; col += 1) {
-      const cell = createCellData(row, col, state.analysisBounds);
-      state.cells.push(cell);
+    const boundary = L.rectangle(state.focusBounds || state.analysisBounds, {
+      color: "#d5ef6c",
+      weight: 1.5,
+      opacity: 0.95,
+      fill: false,
+      dashArray: "7 6",
+      interactive: false
+    });
+    mapLayers.boundary.addLayer(boundary);
+
+    for (let row = 0; row < GRID_ROWS; row += 1) {
+      for (let col = 0; col < GRID_COLS; col += 1) {
+        state.cells.push(createCellData(row, col, state.analysisBounds));
+      }
+    }
+
+    applyCellularAutomata(state.cells);
+    state.cells.forEach(cell => {
       const rectangle = L.rectangle(cell.bounds, {
         color: "rgba(255,255,255,.24)",
-        weight: 0.28,
+        weight: 0.22,
         opacity: 0.46,
         fillColor: classInfo[cell.classIndex].color,
-        fillOpacity: 0.56,
+        fillOpacity: 0.54,
         bubblingMouseEvents: true
       });
-      rectangle.bindTooltip(`<strong>${cell.id} · ${classInfo[cell.classIndex].label}</strong><br>위험확률 ${Math.round(cell.riskScore * 100)}% · NDVI ${cell.ndvi.toFixed(2)}`, { sticky: true });
+      rectangle.bindTooltip(`<strong>${cell.id} · ${classInfo[cell.classIndex].label}</strong><br>CA 보정 위험도 ${Math.round(cell.riskScore * 100)}% · NDVI ${cell.ndvi.toFixed(2)}`, { sticky: true });
       rectangle.on("click", () => {
         if (!state.drawingArea) selectCell(cell);
       });
@@ -253,18 +342,20 @@ function renderMap({ fit = false } = {}) {
         fillOpacity: 0.28,
         interactive: false
       }));
-    }
-  }
+    });
 
-  renderCenters();
-  renderPrimNetwork();
-  updateSummary();
-  updateGreedyPlan();
-  const suggested = [...state.cells].sort((a, b) => b.riskScore - a.riskScore)[Math.floor(state.cells.length * 0.12)];
-  selectCell(suggested || state.cells[0]);
-  updateAreaLabels();
-  updateLayerVisibility();
-  if (fit) satelliteMap.fitBounds(state.analysisBounds, { padding: MAP_FIT_PADDING, animate: false });
+    renderCenters();
+    renderPrimNetwork();
+    updateSummary();
+    updateGreedyPlan();
+    const suggested = [...state.cells].sort((a, b) => b.riskScore - a.riskScore)[Math.floor(state.cells.length * 0.12)];
+    selectCell(suggested || state.cells[0]);
+    updateAreaLabels();
+    updateLayerVisibility();
+  } finally {
+    state.renderingMap = false;
+    state.suppressViewportSync = false;
+  }
 }
 
 function renderCenters() {
@@ -341,7 +432,7 @@ function factorValues(cell) {
 function selectCell(cell) {
   if (!cell) return;
   if (state.selected?.layer) {
-    state.selected.layer.setStyle({ color: "rgba(255,255,255,.24)", weight: 0.28, opacity: 0.46 });
+    state.selected.layer.setStyle({ color: "rgba(255,255,255,.24)", weight: 0.22, opacity: 0.46 });
   }
   state.selected = cell;
   if (cell.layer) {
@@ -528,12 +619,12 @@ function formatBounds(bounds) {
 
 function updateAreaLabels() {
   const region = regions[state.region];
-  $("#map-region-title").textContent = state.customArea ? `${region.name} · 사용자 지정` : region.name;
+  $("#map-region-title").textContent = state.customArea ? `${region.name} · 사용자 지정 · 화면 연동` : `${region.name} · 화면 연동`;
   $("#map-coordinate").textContent = formatBounds(state.analysisBounds);
-  $("#area-coordinates").textContent = `선택 범위 ${formatBounds(state.analysisBounds)}`;
+  $("#area-coordinates").textContent = `현재 화면 ${formatBounds(state.analysisBounds)}`;
   $("#observed-date").textContent = region.observed;
   const resolution = Math.max(1, Math.round(Math.sqrt(state.cellArea)));
-  $(".map-caption p").textContent = `위성 배경: Esri World Imagery · 분석 격자: 약 ${resolution} × ${resolution} km`;
+  $(".map-caption p").textContent = `현재 화면 ${fmt.format(state.cells.length)}셀 · CA ${CA_GENERATIONS}세대 · 약 ${resolution} × ${resolution} km`;
 }
 
 function beginAreaSelection() {
@@ -577,7 +668,8 @@ function handleMapClick(event) {
     $("#selection-instruction span").textContent = "조금 더 넓은 범위로 두 번째 모서리를 선택하세요";
     return;
   }
-  state.analysisBounds = bounds;
+  state.focusBounds = copyBounds(bounds);
+  state.analysisBounds = copyBounds(bounds);
   state.customArea = true;
   finishAreaSelection();
   renderMap({ fit: true });
@@ -594,7 +686,8 @@ function showToast(title, message) {
 }
 
 function setDefaultRegionBounds() {
-  state.analysisBounds = L.latLngBounds(regions[state.region].bounds);
+  state.focusBounds = L.latLngBounds(regions[state.region].bounds);
+  state.analysisBounds = copyBounds(state.focusBounds);
   state.customArea = false;
 }
 
@@ -674,7 +767,11 @@ function initializeEvents() {
 
   $("#zoom-in").addEventListener("click", () => satelliteMap?.zoomIn());
   $("#zoom-out").addEventListener("click", () => satelliteMap?.zoomOut());
-  $("#zoom-reset").addEventListener("click", () => satelliteMap?.fitBounds(state.analysisBounds, { padding: MAP_FIT_PADDING }));
+  $("#zoom-reset").addEventListener("click", () => {
+    if (!satelliteMap || !state.focusBounds) return;
+    state.analysisBounds = copyBounds(state.focusBounds);
+    renderMap({ fit: true });
+  });
 
   const sections = ["analysis-map", "restoration", "methodology"];
   const links = $$(".main-nav a");
