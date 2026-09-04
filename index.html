@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="styles.css?v=viewport-ca3072">
+  <link rel="stylesheet" href="styles.css?v=geo-field-v1">
 </head>
 <body>
   <a class="skip-link" href="#analysis-map">분석 지도로 바로가기</a>
@@ -142,7 +142,7 @@
           <div>
             <div class="map-title-line">
               <h2 id="map-region-title">몽골 남부 · 고비 전이지대</h2>
-              <span class="live-chip"><i></i> 화면 자동분할</span>
+              <span class="live-chip"><i></i> 위·경도 연동</span>
             </div>
             <p id="map-coordinate">43.2°N–46.8°N · 101.0°E–108.7°E</p>
           </div>
@@ -179,7 +179,7 @@
         <div class="map-caption">
           <span><kbd>클릭</kbd> 격자 상세 분석</span>
           <span><kbd>이동·축소</kbd> 화면 자동 재분할</span>
-          <p>위성 배경: Esri World Imagery · 위험도: 교육용 모의 분석</p>
+          <p>위성 배경: Esri World Imagery · 위험도: 위·경도 기반 교육용 모의 분석</p>
         </div>
       </div>
 
@@ -189,7 +189,7 @@
             <span class="step-number">02</span>
             <h2>분석 요약</h2>
           </div>
-          <span class="model-chip">NB + CA ×3</span>
+          <span class="model-chip">위치기반 모의 NB + CA ×3</span>
         </div>
 
         <div class="risk-summary">
@@ -389,6 +389,6 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="app.js?v=viewport-ca3072"></script>
+  <script src="app.js?v=geo-field-v1"></script>
 </body>
 </html>

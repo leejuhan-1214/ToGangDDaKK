@@ -4,6 +4,7 @@ const GRID_COLS = 64;
 const GRID_ROWS = 48;
 const CA_GENERATIONS = 3;
 const MAP_FIT_PADDING = [4, 4];
+const MANAGEMENT_SPACING_PIXELS = 190;
 
 const classInfo = [
   { label: "안정", color: "#5d9667" },
@@ -17,27 +18,18 @@ const regions = {
     name: "몽골 남부 · 고비 전이지대",
     bounds: [[43.2, 101.0], [46.8, 108.7]],
     observed: "2026.08.28",
-    prefix: "GB",
-    factor: 0.05,
-    rainAdjust: -8,
     placeNames: ["달란자드가드 동부", "옴노고비 북단", "차강오보 남부", "만달오보 서부", "구르반테스 동부"]
   },
   sahel: {
     name: "사헬 서부 · 세네갈 북부",
     bounds: [[14.7, -15.8], [16.3, -13.5]],
     observed: "2026.08.26",
-    prefix: "SH",
-    factor: 0.11,
-    rainAdjust: 15,
     placeNames: ["루가 북동부", "마탐 서부", "포도르 남부", "링게르 동부", "페를로 초원"]
   },
   aral: {
     name: "중앙아시아 · 아랄해 동부",
     bounds: [[43.1, 60.2], [46.2, 64.9]],
     observed: "2026.08.24",
-    prefix: "AR",
-    factor: 0.17,
-    rainAdjust: -15,
     placeNames: ["키질로르다 서부", "아랄 동부", "시르다리야 하류", "카라테렌 남부", "사크사울 북부"]
   }
 };
@@ -49,18 +41,22 @@ const model = [
   { mean: [0.12, -27, 27, 7, 39, 78], sd: [0.08, 8, 13, 3, 4, 10], prior: 0.15 }
 ];
 
-// Normalized positions inside the current analysis bounds.
-const centers = [
-  { x: 0.18, y: 0.23, label: "A" },
-  { x: 0.43, y: 0.17, label: "B" },
-  { x: 0.76, y: 0.31, label: "C" },
-  { x: 0.29, y: 0.72, label: "D" },
-  { x: 0.67, y: 0.77, label: "E" }
-];
 const zoneColors = ["#5c9a88", "#7dac61", "#c8a257", "#9873a5", "#6489a5"];
+
+// These broad synthetic priors are blended smoothly with coordinate-anchored noise.
+// They are not observations or a substitute for a trained remote-sensing model.
+const drylandHotspots = [
+  { lat: 25, lng: 15, latRadius: 14, lngRadius: 33, strength: 0.22 },
+  { lat: 24, lng: 46, latRadius: 9, lngRadius: 16, strength: 0.18 },
+  { lat: 45, lng: 105, latRadius: 6, lngRadius: 11, strength: 0.18 },
+  { lat: 44.6, lng: 62.5, latRadius: 5, lngRadius: 8, strength: 0.20 },
+  { lat: -25, lng: 134, latRadius: 12, lngRadius: 19, strength: 0.17 },
+  { lat: 35, lng: -112, latRadius: 8, lngRadius: 12, strength: 0.11 }
+];
 
 const state = {
   cells: [],
+  managementCenters: [],
   selected: null,
   selectedSites: [],
   region: "gobi",
@@ -83,25 +79,59 @@ let satelliteMap;
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+const lerp = (start, end, amount) => start + (end - start) * amount;
+const smoothStep = value => value * value * (3 - 2 * value);
 const fmt = new Intl.NumberFormat("ko-KR");
 
-function seeded(row, col, salt = 0) {
-  const regionSeed = { gobi: 11.7, sahel: 29.3, aral: 47.1 }[state.region];
-  const center = state.analysisBounds?.getCenter();
-  const geographicSeed = center ? center.lat * 13.17 + center.lng * 7.31 : 0;
-  const value = Math.sin((row + 1) * 91.733 + (col + 1) * 37.719 + salt * 19.19 + regionSeed + geographicSeed) * 43758.5453;
+function normalizeLongitude(longitude) {
+  return ((longitude + 180) % 360 + 360) % 360 - 180;
+}
+
+function hashCoordinate(x, y, salt = 0) {
+  const value = Math.sin(x * 127.1 + y * 311.7 + salt * 74.7) * 43758.5453123;
   return value - Math.floor(value);
 }
 
-function gridRowLabel(row) {
-  let value = row + 1;
-  let label = "";
-  while (value > 0) {
-    value -= 1;
-    label = String.fromCharCode(65 + (value % 26)) + label;
-    value = Math.floor(value / 26);
-  }
-  return label;
+function valueNoise(lat, lng, scale, salt = 0) {
+  const longitudePeriod = Math.round(360 / scale);
+  const x = (normalizeLongitude(lng) + 180) / scale;
+  const y = (lat + 90) / scale;
+  const x0 = Math.floor(x);
+  const y0 = Math.floor(y);
+  const tx = smoothStep(x - x0);
+  const ty = smoothStep(y - y0);
+  const wrapX = value => ((value % longitudePeriod) + longitudePeriod) % longitudePeriod;
+  const northWest = hashCoordinate(wrapX(x0), y0, salt);
+  const northEast = hashCoordinate(wrapX(x0 + 1), y0, salt);
+  const southWest = hashCoordinate(wrapX(x0), y0 + 1, salt);
+  const southEast = hashCoordinate(wrapX(x0 + 1), y0 + 1, salt);
+  return lerp(lerp(northWest, northEast, tx), lerp(southWest, southEast, tx), ty);
+}
+
+function geographicField(lat, lng, salt = 0) {
+  return valueNoise(lat, lng, 12, salt) * 0.48
+    + valueNoise(lat, lng, 4, salt + 11) * 0.34
+    + valueNoise(lat, lng, 1, salt + 23) * 0.18;
+}
+
+function longitudeDistance(first, second) {
+  return Math.abs(((first - second + 540) % 360) - 180);
+}
+
+function drylandPrior(lat, lng) {
+  const prior = drylandHotspots.reduce((sum, hotspot) => {
+    const latDistance = (lat - hotspot.lat) / hotspot.latRadius;
+    const lngDistance = longitudeDistance(lng, hotspot.lng) / hotspot.lngRadius;
+    return sum + hotspot.strength * Math.exp(-0.5 * (latDistance ** 2 + lngDistance ** 2));
+  }, 0);
+  return clamp(prior, 0, 0.30);
+}
+
+function geographicCellId(lat, lng) {
+  const normalizedLng = normalizeLongitude(lng);
+  const latitude = String(Math.round(Math.abs(lat) * 1000)).padStart(6, "0");
+  const longitude = String(Math.round(Math.abs(normalizedLng) * 1000)).padStart(6, "0");
+  return `GEO-${lat >= 0 ? "N" : "S"}${latitude}-${normalizedLng >= 0 ? "E" : "W"}${longitude}`;
 }
 
 function gaussianClassify(features) {
@@ -177,27 +207,6 @@ function applyCellularAutomata(cells) {
 }
 
 function createCellData(row, col, bounds) {
-  const x = col / (GRID_COLS - 1);
-  const y = row / (GRID_ROWS - 1);
-  const pocket = Math.sin(x * 8.7 + y * 3.2) * 0.08 + Math.cos(y * 10.1 - x * 2.7) * 0.06;
-  const noise = (seeded(row, col) - 0.5) * 0.16;
-  const region = regions[state.region];
-  const periodYears = Math.max(1, Number($("#end-date").value.slice(0, 4)) - Number($("#start-date").value.slice(0, 4)));
-  const timePressure = clamp((periodYears - 3) * 0.012, -0.02, 0.06);
-  const baseRisk = clamp(0.08 + x * 0.36 + y * 0.29 + pocket + noise + region.factor + timePressure, 0.02, 0.98);
-
-  const ndvi = clamp(0.67 - baseRisk * 0.60 + (seeded(row, col, 1) - 0.5) * 0.08, 0.05, 0.75);
-  const ndviTrend = clamp(-1 - baseRisk * 28 + (seeded(row, col, 2) - 0.5) * 7, -38, 4);
-  const rainfall = clamp(132 - baseRisk * 105 + region.rainAdjust + (seeded(row, col, 3) - 0.5) * 24, 8, 165);
-  const moisture = clamp(29 - baseRisk * 23 + (seeded(row, col, 4) - 0.5) * 5, 3, 31);
-  const temperature = clamp(22 + baseRisk * 18 + (seeded(row, col, 5) - 0.5) * 4, 19, 43);
-  const bareSoil = clamp(13 + baseRisk * 72 + (seeded(row, col, 6) - 0.5) * 12, 7, 92);
-  const classification = gaussianClassify([ndvi, ndviTrend, rainfall, moisture, temperature, bareSoil]);
-  const riskScore = classification.probabilities[2] + classification.probabilities[3];
-  const ecological = clamp(0.45 + seeded(row, col, 7) * 0.55, 0, 1);
-  const people = 1.2 + seeded(row, col, 8) * 5.8;
-  const cost = 3.6 + seeded(row, col, 9) * 5.2 + ecological * 1.2;
-
   const south = bounds.getSouth();
   const north = bounds.getNorth();
   const west = bounds.getWest();
@@ -209,18 +218,88 @@ function createCellData(row, col, bounds) {
   const cellWest = west + col * lngStep;
   const cellEast = west + (col + 1) * lngStep;
   const cellBounds = L.latLngBounds([[cellSouth, cellWest], [cellNorth, cellEast]]);
+  const cellCenter = cellBounds.getCenter();
+  const normalizedLng = normalizeLongitude(cellCenter.lng);
   const normalizedPoint = { x: (col + 0.5) / GRID_COLS, y: (row + 0.5) / GRID_ROWS };
-  const zone = centers.reduce((best, center, index) => {
+  const periodYears = Math.max(1, Number($("#end-date").value.slice(0, 4)) - Number($("#start-date").value.slice(0, 4)));
+  const timePressure = clamp((periodYears - 3) * 0.012, -0.02, 0.06);
+  const absoluteLatitude = Math.abs(cellCenter.lat);
+  const subtropicalDryness = Math.exp(-Math.pow((absoluteLatitude - 27) / 15, 2));
+  const equatorialMoisture = Math.exp(-Math.pow(absoluteLatitude / 11, 2));
+  const polarRecovery = Math.exp(-Math.pow((absoluteLatitude - 78) / 12, 2));
+  const geographicVariation = (geographicField(cellCenter.lat, normalizedLng) - 0.5) * 0.42;
+  const regionalVariation = (geographicField(cellCenter.lat, normalizedLng, 41) - 0.5) * 0.20;
+  const baseRisk = clamp(
+    0.31
+      + subtropicalDryness * 0.24
+      + drylandPrior(cellCenter.lat, normalizedLng)
+      + geographicVariation
+      + regionalVariation
+      + timePressure
+      - equatorialMoisture * 0.20
+      - polarRecovery * 0.18,
+    0.02,
+    0.98
+  );
+  const detail = salt => valueNoise(cellCenter.lat, normalizedLng, 0.25, salt);
+  const latitudeCooling = clamp((absoluteLatitude - 20) * 0.18, 0, 9);
+  const ndvi = clamp(0.67 - baseRisk * 0.60 + (detail(1) - 0.5) * 0.08, 0.05, 0.75);
+  const ndviTrend = clamp(-1 - baseRisk * 28 + (detail(2) - 0.5) * 7, -38, 4);
+  const rainfall = clamp(145 - baseRisk * 118 + (detail(3) - 0.5) * 24, 8, 165);
+  const moisture = clamp(29 - baseRisk * 23 + (detail(4) - 0.5) * 5, 3, 31);
+  const temperature = clamp(24 + baseRisk * 16 - latitudeCooling + (detail(5) - 0.5) * 4, 12, 43);
+  const bareSoil = clamp(13 + baseRisk * 72 + (detail(6) - 0.5) * 12, 7, 92);
+  const classification = gaussianClassify([ndvi, ndviTrend, rainfall, moisture, temperature, bareSoil]);
+  const riskScore = classification.probabilities[2] + classification.probabilities[3];
+  const ecological = clamp(0.35 + (1 - baseRisk) * 0.35 + detail(7) * 0.30, 0, 1);
+  const people = 1.2 + detail(8) * 5.8;
+  const cost = 3.6 + detail(9) * 5.2 + ecological * 1.2;
+  const zone = state.managementCenters.reduce((best, center) => {
     const distance = Math.hypot(normalizedPoint.x - center.x, normalizedPoint.y - center.y);
-    return distance < best.distance ? { index, distance } : best;
-  }, { index: 0, distance: Infinity }).index;
+    return distance < best.distance ? { colorIndex: center.colorIndex, distance } : best;
+  }, { colorIndex: 0, distance: Infinity }).colorIndex;
 
   return {
     row, col, x: normalizedPoint.x, y: normalizedPoint.y, zone, ndvi, ndviTrend, rainfall, moisture,
     temperature, bareSoil, ecological, people, cost, riskScore, bounds: cellBounds,
-    latlng: cellBounds.getCenter(), ...classification,
-    id: `${region.prefix}-${gridRowLabel(row)}${String(col + 1).padStart(2, "0")}`
+    latlng: cellCenter, ...classification,
+    id: geographicCellId(cellCenter.lat, normalizedLng)
   };
+}
+
+function createManagementCenters(bounds) {
+  const zoomBand = Math.round(satelliteMap.getZoom());
+  const northWest = satelliteMap.project(bounds.getNorthWest(), zoomBand);
+  const southEast = satelliteMap.project(bounds.getSouthEast(), zoomBand);
+  const firstColumn = Math.floor(northWest.x / MANAGEMENT_SPACING_PIXELS) - 1;
+  const lastColumn = Math.ceil(southEast.x / MANAGEMENT_SPACING_PIXELS) + 1;
+  const firstRow = Math.floor(northWest.y / MANAGEMENT_SPACING_PIXELS) - 1;
+  const lastRow = Math.ceil(southEast.y / MANAGEMENT_SPACING_PIXELS) + 1;
+  const width = Math.max(1, southEast.x - northWest.x);
+  const height = Math.max(1, southEast.y - northWest.y);
+  const generated = [];
+
+  for (let gridRow = firstRow; gridRow <= lastRow; gridRow += 1) {
+    for (let gridColumn = firstColumn; gridColumn <= lastColumn; gridColumn += 1) {
+      const offsetX = 0.18 + hashCoordinate(gridColumn, gridRow, zoomBand + 101) * 0.64;
+      const offsetY = 0.18 + hashCoordinate(gridColumn, gridRow, zoomBand + 211) * 0.64;
+      const point = L.point(
+        (gridColumn + offsetX) * MANAGEMENT_SPACING_PIXELS,
+        (gridRow + offsetY) * MANAGEMENT_SPACING_PIXELS
+      );
+      const x = (point.x - northWest.x) / width;
+      const y = (point.y - northWest.y) / height;
+      generated.push({
+        x,
+        y,
+        latlng: satelliteMap.unproject(point, zoomBand),
+        visible: x >= 0 && x <= 1 && y >= 0 && y <= 1,
+        colorIndex: Math.floor(hashCoordinate(gridColumn, gridRow, zoomBand + 307) * zoneColors.length),
+        label: String(10 + Math.abs((gridColumn * 31 + gridRow * 17) % 90))
+      });
+    }
+  }
+  return generated;
 }
 
 function initializeSatelliteMap() {
@@ -282,10 +361,7 @@ function areaKm2(bounds) {
 }
 
 function centerToLatLng(center) {
-  const bounds = state.analysisBounds;
-  const lat = bounds.getNorth() - center.y * (bounds.getNorth() - bounds.getSouth());
-  const lng = bounds.getWest() + center.x * (bounds.getEast() - bounds.getWest());
-  return L.latLng(lat, lng);
+  return center.latlng;
 }
 
 function renderMap({ fit = false } = {}) {
@@ -302,6 +378,7 @@ function renderMap({ fit = false } = {}) {
     state.cells = [];
     state.selected = null;
     state.cellArea = areaKm2(state.analysisBounds) / (GRID_ROWS * GRID_COLS);
+    state.managementCenters = createManagementCenters(state.analysisBounds);
 
     const boundary = L.rectangle(state.focusBounds || state.analysisBounds, {
       color: "#d5ef6c",
@@ -329,7 +406,7 @@ function renderMap({ fit = false } = {}) {
         fillOpacity: 0.54,
         bubblingMouseEvents: true
       });
-      rectangle.bindTooltip(`<strong>${cell.id} · ${classInfo[cell.classIndex].label}</strong><br>CA 보정 위험도 ${Math.round(cell.riskScore * 100)}% · NDVI ${cell.ndvi.toFixed(2)}`, { sticky: true });
+      rectangle.bindTooltip(`<strong>${cell.id} · ${classInfo[cell.classIndex].label}</strong><br>CA 보정 위험도 ${Math.round(cell.riskScore * 100)}% · NDVI ${cell.ndvi.toFixed(2)}<br>${cell.latlng.lat.toFixed(3)}°, ${normalizeLongitude(cell.latlng.lng).toFixed(3)}°`, { sticky: true });
       rectangle.on("click", () => {
         if (!state.drawingArea) selectCell(cell);
       });
@@ -359,7 +436,7 @@ function renderMap({ fit = false } = {}) {
 }
 
 function renderCenters() {
-  centers.forEach(center => {
+  state.managementCenters.filter(center => center.visible).forEach(center => {
     const icon = L.divIcon({
       className: "hub-marker-wrap",
       html: `<span class="hub-marker">${center.label}</span>`,
@@ -391,10 +468,11 @@ function primEdges(points) {
 }
 
 function renderPrimNetwork() {
-  primEdges(centers).forEach(edge => {
+  const visibleCenters = state.managementCenters.filter(center => center.visible);
+  primEdges(visibleCenters).forEach(edge => {
     mapLayers.network.addLayer(L.polyline([
-      centerToLatLng(centers[edge.from]),
-      centerToLatLng(centers[edge.to])
+      centerToLatLng(visibleCenters[edge.from]),
+      centerToLatLng(visibleCenters[edge.to])
     ], { color: "#d5ef6c", weight: 3, opacity: 0.95, dashArray: "7 7", interactive: false }));
   });
 }
@@ -490,7 +568,9 @@ function updateGreedyPlan() {
   selected.slice(0, 5).forEach((site, index) => {
     const item = document.createElement("div");
     item.className = "priority-item";
-    const place = state.customArea ? `사용자 구역 후보 ${index + 1}` : regions[state.region].placeNames[index % regions[state.region].placeNames.length];
+    const place = state.customArea || !viewingPresetCenter()
+      ? `현재 지도 후보 ${index + 1}`
+      : regions[state.region].placeNames[index % regions[state.region].placeNames.length];
     item.innerHTML = `
       <span class="priority-rank">${index + 1}</span>
       <div><strong>${place}</strong><small>${site.id} · 위험확률 ${Math.round(site.riskScore * 100)}%</small></div>
@@ -585,7 +665,9 @@ function aStar(start, goal) {
 function renderRoute() {
   mapLayers.route.clearLayers();
   if (!state.selectedSites.length) return;
-  const start = closestCellTo(centers[3]);
+  const visibleCenters = state.managementCenters.filter(center => center.visible);
+  const startPoint = visibleCenters[Math.min(3, visibleCenters.length - 1)] || { x: 0.12, y: 0.82 };
+  const start = closestCellTo(startPoint);
   const goal = state.selectedSites[0];
   const path = aStar(start, goal);
   if (!path.length) return;
@@ -617,14 +699,21 @@ function formatBounds(bounds) {
   return `${coordinateRange(bounds.getSouth(), bounds.getNorth(), "N", "S")} · ${coordinateRange(bounds.getWest(), bounds.getEast(), "E", "W")}`;
 }
 
+function viewingPresetCenter() {
+  return Boolean(state.focusBounds?.contains(state.analysisBounds.getCenter()));
+}
+
 function updateAreaLabels() {
   const region = regions[state.region];
-  $("#map-region-title").textContent = state.customArea ? `${region.name} · 사용자 지정 · 화면 연동` : `${region.name} · 화면 연동`;
+  const title = viewingPresetCenter()
+    ? `${region.name}${state.customArea ? " · 사용자 지정" : ""}`
+    : "이동한 지도 위치";
+  $("#map-region-title").textContent = `${title} · 위·경도 연동`;
   $("#map-coordinate").textContent = formatBounds(state.analysisBounds);
   $("#area-coordinates").textContent = `현재 화면 ${formatBounds(state.analysisBounds)}`;
   $("#observed-date").textContent = region.observed;
   const resolution = Math.max(1, Math.round(Math.sqrt(state.cellArea)));
-  $(".map-caption p").textContent = `현재 화면 ${fmt.format(state.cells.length)}셀 · CA ${CA_GENERATIONS}세대 · 약 ${resolution} × ${resolution} km`;
+  $(".map-caption p").textContent = `위치기반 모의 분석 · 현재 화면 ${fmt.format(state.cells.length)}셀 · CA ${CA_GENERATIONS}세대 · 약 ${resolution} × ${resolution} km`;
 }
 
 function beginAreaSelection() {
