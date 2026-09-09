@@ -1,394 +1,81 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="SDG 15 사막화 위험 탐지와 토지복원 의사결정을 위한 위성 데이터 기반 프로토타입">
-  <meta name="theme-color" content="#112c25">
-  <title>LAND:15 — 사막화 대응 의사결정 랩</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <link rel="stylesheet" href="styles.css?v=geo-field-v1">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LAND:15 — 사막화 대응 3D 랩</title>
+  <meta name="description" content="실제 위성영상과 3D 지형 위에서 사막화 분류, 관리구역, 복원 예산과 접근 경로를 실험하는 교육용 의사결정 랩.">
+  <meta name="theme-color" content="#111918">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="vendor/maplibre-gl.css"><link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <a class="skip-link" href="#analysis-map">분석 지도로 바로가기</a>
-
-  <header class="topbar">
-    <a class="brand" href="#" aria-label="LAND 15 홈">
-      <span class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 40 40"><path d="M8 27c8-1 10-7 12-17 7 6 10 12 7 18-3 7-13 7-19-1Z"/><path d="M11 31c5-7 10-11 17-15"/></svg>
-      </span>
-      <span>
-        <strong>LAND:15</strong>
-        <small>Desertification Decision Lab</small>
-      </span>
-    </a>
-
-    <nav class="main-nav" aria-label="주요 메뉴">
-      <a class="active" href="#analysis-map">분석 지도</a>
-      <a href="#restoration">복원 계획</a>
-      <a href="#methodology">방법론</a>
-    </nav>
-
-    <div class="top-actions">
-      <span class="prototype-badge">PROTOTYPE</span>
-      <button class="icon-button" id="info-button" aria-label="프로젝트 정보 보기">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7.2v.2"/></svg>
-      </button>
-    </div>
-  </header>
-
-  <main>
-    <section class="intro-band" aria-labelledby="page-title">
-      <div>
-        <p class="eyebrow"><span></span> UN SDG 15.3 · 토지 황폐화 중립</p>
-        <h1 id="page-title">사막화의 징후를 찾고,<br><em>복원의 다음 지점</em>을 계산합니다.</h1>
+<a class="skip" href="#map">지도로 바로가기</a>
+<header class="topbar">
+  <a class="brand" href="./" aria-label="LAND 15 홈"><span class="brand-icon">↗</span><span>LAND<span class="brand-number">:15</span></span><small>EARTH OBSERVATION LAB</small></a>
+  <div class="project-title">사막화 대응 의사결정 랩 <span>3D ATLAS</span></div>
+  <nav aria-label="프로젝트 메뉴"><span class="sdg">SDG 15.3</span><button class="text-btn" id="about-btn">프로젝트 안내 <span>↗</span></button></nav>
+</header>
+<main class="workspace">
+  <aside class="sidebar" aria-label="분석 설정">
+    <div class="sidebar-heading"><span class="eyebrow">EXPLORE & RESTORE</span><span class="version">02 / LAB</span><h1>땅의 변화를 읽고,<br>다음 복원을 설계하다.</h1></div>
+    <section class="section region-section">
+      <div class="section-heading"><h2><b>01</b> 분석 지역</h2><span class="quiet">3개 탐색 지역</span></div>
+      <div class="region-list" role="group" aria-label="분석 지역 선택">
+        <button class="region-card active" data-region="gobi" aria-pressed="true"><span class="region-num">01</span><span><strong>고비 전이지대</strong><small>몽골 남부 · MONGOLIA</small></span><span class="region-arrow">↗</span></button>
+        <button class="region-card" data-region="sahel" aria-pressed="false"><span class="region-num">02</span><span><strong>사헬 서부</strong><small>세네갈 북부 · SENEGAL</small></span><span class="region-arrow">↗</span></button>
+        <button class="region-card" data-region="aral" aria-pressed="false"><span class="region-num">03</span><span><strong>아랄해 동부</strong><small>중앙아시아 · CENTRAL ASIA</small></span><span class="region-arrow">↗</span></button>
       </div>
-      <div class="intro-copy">
-        <p>위성 관측 지표와 공간 알고리즘을 결합해 위험을 분류하고, 제한된 예산 안에서 복원 우선지역과 거점 연결망을 제안합니다.</p>
-        <span class="data-notice"><i></i> 현재 화면은 교육용 모의 데이터입니다</span>
-      </div>
+      <div class="area-actions"><button id="draw-btn">⌗ 구역 직접 지정</button><button id="viewport-btn">현재 화면 분석</button></div>
+      <p id="area-status" class="micro">선택 구역 고정 · 카메라 이동 시 결과 유지</p>
     </section>
-
-    <section class="workspace" id="analysis-map" aria-label="사막화 위험 분석 도구">
-      <aside class="control-panel panel">
-        <div class="panel-heading">
-          <div>
-            <span class="step-number">01</span>
-            <h2>분석 조건</h2>
-          </div>
-          <button class="text-button" id="reset-button">초기화</button>
-        </div>
-
-        <div class="form-group">
-          <label for="region-select">대상 지역</label>
-          <div class="select-wrap">
-            <select id="region-select">
-              <option value="gobi">몽골 남부 · 고비 전이지대</option>
-              <option value="sahel">사헬 서부 · 세네갈 북부</option>
-              <option value="aral">중앙아시아 · 아랄해 동부</option>
-            </select>
-            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>
-          </div>
-        </div>
-
-        <button class="area-button" id="area-select-button" type="button">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9V5h4M15 5h4v4M19 15v4h-4M9 19H5v-4"/></svg>
-          지도에서 분석 구역 지정
-        </button>
-        <p class="area-coordinates" id="area-coordinates">선택 범위 43.20–46.80°N · 101.00–108.70°E</p>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="start-date">비교 시작</label>
-            <input type="month" id="start-date" value="2021-08">
-          </div>
-          <div class="form-group">
-            <label for="end-date">최근 관측</label>
-            <input type="month" id="end-date" value="2026-08">
-          </div>
-        </div>
-
-        <div class="source-card">
-          <div class="source-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M4 17.5 12 4l8 13.5M7 14h10M9.7 9.5h4.6M5 20h14"/></svg>
-          </div>
-          <div>
-            <span>실제 위성영상 베이스맵</span>
-            <strong>Esri World Imagery</strong>
-            <small>촬영 시점·해상도는 지역별 상이</small>
-          </div>
-          <span class="status-dot" title="데이터 소스 준비됨"></span>
-        </div>
-
-        <div class="slider-group">
-          <div class="label-line">
-            <label for="threshold-range">고위험 판정 기준</label>
-            <output id="threshold-output" for="threshold-range">65%</output>
-          </div>
-          <input type="range" id="threshold-range" min="45" max="80" value="65" step="1">
-          <div class="range-labels"><span>민감하게</span><span>엄격하게</span></div>
-        </div>
-
-        <div class="slider-group budget-group">
-          <div class="label-line">
-            <label for="budget-range">가상 복원 예산</label>
-            <output id="budget-output" for="budget-range">30억 원</output>
-          </div>
-          <input type="range" id="budget-range" min="10" max="70" value="30" step="5">
-          <div class="range-labels"><span>10억</span><span>70억</span></div>
-        </div>
-
-        <fieldset class="layer-control">
-          <legend>지도 레이어</legend>
-          <label><input type="checkbox" data-layer="risk" checked><span><i class="layer-icon risk-icon"></i>위험도 분류</span></label>
-          <label><input type="checkbox" data-layer="zones"><span><i class="layer-icon zone-icon"></i>보로노이 관리구역</span></label>
-          <label><input type="checkbox" data-layer="network"><span><i class="layer-icon network-icon"></i>프림 최소 연결망</span></label>
-          <label><input type="checkbox" data-layer="route"><span><i class="layer-icon route-icon"></i>A* 현장 경로</span></label>
-        </fieldset>
-
-        <button class="primary-button" id="run-analysis">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7M4 17h16M7 14l4-4 3 2 5-6"/></svg>
-          분석 다시 실행
-          <span>↗</span>
-        </button>
-        <p class="control-footnote">입력 조건은 브라우저에서만 계산되며 서버로 전송되지 않습니다.</p>
-      </aside>
-
-      <div class="map-panel panel">
-        <div class="map-toolbar">
-          <div>
-            <div class="map-title-line">
-              <h2 id="map-region-title">몽골 남부 · 고비 전이지대</h2>
-              <span class="live-chip"><i></i> 위·경도 연동</span>
-            </div>
-            <p id="map-coordinate">43.2°N–46.8°N · 101.0°E–108.7°E</p>
-          </div>
-          <div class="map-meta">
-            <span>관측 예시일</span>
-            <strong id="observed-date">2026.08.28</strong>
-          </div>
-        </div>
-
-        <div class="map-stage" id="map-stage">
-          <div id="satellite-map" role="application" aria-label="실제 위성영상 기반 사막화 분석 지도"></div>
-          <div class="selection-instruction" id="selection-instruction" role="status">
-            <strong>분석 구역 지정 중</strong>
-            <span>첫 번째 모서리를 지도에서 클릭하세요</span>
-          </div>
-
-          <div class="map-legend" id="map-legend">
-            <span>사막화 위험</span>
-            <div><i class="normal"></i>안정</div>
-            <div><i class="attention"></i>주의</div>
-            <div><i class="high"></i>위험</div>
-            <div><i class="critical"></i>심각</div>
-          </div>
-
-          <div class="map-controls" aria-label="지도 보기 조절">
-            <button id="zoom-in" aria-label="지도 확대">+</button>
-            <button id="zoom-out" aria-label="지도 축소">−</button>
-            <button id="zoom-reset" aria-label="지도 보기 초기화">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v3M12 17v3M4 12h3M17 12h3"/><circle cx="12" cy="12" r="5"/></svg>
-            </button>
-          </div>
-        </div>
-
-        <div class="map-caption">
-          <span><kbd>클릭</kbd> 격자 상세 분석</span>
-          <span><kbd>이동·축소</kbd> 화면 자동 재분할</span>
-          <p>위성 배경: Esri World Imagery · 위험도: 위·경도 기반 교육용 모의 분석</p>
-        </div>
-      </div>
-
-      <aside class="insight-panel panel" aria-live="polite">
-        <div class="panel-heading compact">
-          <div>
-            <span class="step-number">02</span>
-            <h2>분석 요약</h2>
-          </div>
-          <span class="model-chip">위치기반 모의 NB + CA ×3</span>
-        </div>
-
-        <div class="risk-summary">
-          <div class="donut-wrap">
-            <svg class="donut" viewBox="0 0 100 100" aria-label="고위험 지역 비율">
-              <circle class="donut-bg" cx="50" cy="50" r="41"/>
-              <circle class="donut-value" id="donut-value" cx="50" cy="50" r="41"/>
-            </svg>
-            <div><strong id="risk-percent">32%</strong><span>고위험 이상</span></div>
-          </div>
-          <div class="summary-numbers">
-            <span>추정 면적</span>
-            <strong id="risk-area">18,432 <small>km²</small></strong>
-            <em id="risk-change">이전 기간 대비 +4.7%</em>
-          </div>
-        </div>
-
-        <div class="class-bars" aria-label="위험등급별 면적 비율">
-          <div><span><i class="normal"></i>안정</span><strong id="normal-label">26%</strong></div>
-          <div class="bar"><i id="normal-bar"></i></div>
-          <div><span><i class="attention"></i>주의</span><strong id="attention-label">42%</strong></div>
-          <div class="bar"><i id="attention-bar"></i></div>
-          <div><span><i class="high"></i>위험</span><strong id="high-label">23%</strong></div>
-          <div class="bar"><i id="high-bar"></i></div>
-          <div><span><i class="critical"></i>심각</span><strong id="critical-label">9%</strong></div>
-          <div class="bar"><i id="critical-bar"></i></div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="selected-cell">
-          <div class="section-title-line">
-            <h3>선택 격자 진단</h3>
-            <span id="cell-id">G-14</span>
-          </div>
-          <div class="cell-verdict">
-            <div>
-              <span>분류 결과</span>
-              <strong id="cell-class">위험</strong>
-            </div>
-            <div>
-              <span>모델 확신도</span>
-              <strong id="cell-confidence">84%</strong>
-            </div>
-          </div>
-          <div class="metric-list">
-            <div><span>NDVI</span><strong id="ndvi-value">0.24</strong><em id="ndvi-trend">−18%</em></div>
-            <div><span>월 강수량</span><strong id="rainfall-value">42 mm</strong><em id="rainfall-trend">−12%</em></div>
-            <div><span>토양 수분</span><strong id="moisture-value">11%</strong><em id="moisture-trend">−7%</em></div>
-            <div><span>지표 온도</span><strong id="temperature-value">34.2°C</strong><em class="warm" id="temperature-trend">+2.1°C</em></div>
-          </div>
-        </div>
-
-        <div class="reason-card">
-          <div class="section-title-line">
-            <h3>판정에 기여한 요인</h3>
-            <button class="help-dot" aria-label="기여도 설명" title="각 지표가 위험 판정에 미친 상대적 영향입니다">?</button>
-          </div>
-          <div id="factor-list"></div>
-        </div>
-      </aside>
+    <section class="section">
+      <div class="section-heading"><h2><b>02</b> 분석 조건</h2><button class="link-btn" id="reset-btn">초기화</button></div>
+      <label class="range-label" for="threshold">고위험 판정 기준 <output id="threshold-value">65<span> / 100</span></output></label>
+      <input type="range" min="20" max="95" value="65" step="1" id="threshold"><div class="range-extents"><span>넓게 탐색</span><span>집중 대응</span></div>
+      <label class="range-label budget-label" for="budget">가상 복원 예산 <output id="budget-value">30<span>억 원</span></output></label>
+      <input type="range" min="0" max="80" value="30" step="1" id="budget"><div class="range-extents"><span>0억</span><span>80억</span></div>
+      <div class="select-pair"><label for="years">모의 기간<select id="years"><option value="1">1년</option><option value="3" selected>3년</option><option value="5">5년</option><option value="8">8년</option></select></label><label for="generations">공간 보정<select id="generations"><option value="0">0세대 (초기값)</option><option value="1">1세대</option><option value="3" selected>3세대</option><option value="5">5세대</option><option value="8">8세대</option></select></label></div>
     </section>
-
-    <section class="restoration-section" id="restoration" aria-labelledby="restoration-title">
-      <div class="section-intro">
-        <p class="eyebrow"><span></span> FROM SIGNAL TO ACTION</p>
-        <h2 id="restoration-title">탐지에서 끝내지 않고<br><em>복원 행동까지 연결합니다.</em></h2>
-        <p>하나의 예측 결과를 네 가지 알고리즘이 이어받습니다. 알고리즘마다 담당하는 질문이 다릅니다.</p>
-      </div>
-
-      <div class="algorithm-flow">
-        <article class="algorithm-card active" data-focus-layer="risk">
-          <span class="algorithm-index">01</span>
-          <div class="algorithm-icon naive" aria-hidden="true">CA</div>
-          <p>어디가 위험한가?</p>
-          <h3>나이브 베이즈 + CA</h3>
-          <span>확률 분류·인접 확산 보정</span>
-        </article>
-        <i class="flow-arrow">→</i>
-        <article class="algorithm-card" data-focus-layer="zones">
-          <span class="algorithm-index">02</span>
-          <div class="algorithm-icon voronoi" aria-hidden="true"><i></i><i></i><i></i></div>
-          <p>누가 관리할 것인가?</p>
-          <h3>보로노이</h3>
-          <span>최근접 관리구역 배정</span>
-        </article>
-        <i class="flow-arrow">→</i>
-        <article class="algorithm-card" data-focus-layer="greedy">
-          <span class="algorithm-index">03</span>
-          <div class="algorithm-icon greedy" aria-hidden="true">₩</div>
-          <p>어디부터 복원할까?</p>
-          <h3>그리디</h3>
-          <span>비용 대비 효과 최적화</span>
-        </article>
-        <i class="flow-arrow">→</i>
-        <article class="algorithm-card" data-focus-layer="network">
-          <span class="algorithm-index">04</span>
-          <div class="algorithm-icon prim" aria-hidden="true"><i></i><i></i><i></i></div>
-          <p>거점을 어떻게 이을까?</p>
-          <h3>프림 + A*</h3>
-          <span>기반망·현장 경로 설계</span>
-        </article>
-      </div>
-
-      <div class="decision-board">
-        <div class="decision-heading">
-          <div>
-            <span class="step-number">03</span>
-            <h2>복원 우선순위 제안</h2>
-          </div>
-          <div class="budget-pill">예산 <strong id="board-budget">30억 원</strong></div>
-        </div>
-        <div class="decision-grid">
-          <div class="priority-list" id="priority-list"></div>
-          <div class="decision-impact">
-            <p>예상 복원 효과</p>
-            <strong id="restored-area">3,840 <small>ha</small></strong>
-            <div class="impact-track"><i id="impact-track"></i></div>
-            <div class="impact-stats">
-              <span><strong id="selected-count">4곳</strong> 선정 지역</span>
-              <span><strong id="people-impact">12.6천 명</strong> 영향 인구</span>
-              <span><strong id="budget-use">96%</strong> 예산 집행률</span>
-            </div>
-            <p class="decision-note">위험도 × 생태가치 × 주민영향을 비용으로 나눈 점수가 높은 순으로 선정합니다.</p>
-          </div>
-        </div>
-      </div>
+    <section class="section layers-section">
+      <div class="section-heading"><h2><b>03</b> 지도 레이어</h2><span class="quiet">겹쳐서 비교</span></div>
+      <label class="layer"><span><i class="swatch risk"></i>사막화 위험도</span><input type="checkbox" data-layer="risk" checked><span class="switch" aria-hidden="true"></span></label>
+      <label class="layer"><span><i class="swatch zones"></i>보로노이 관리구역</span><input type="checkbox" data-layer="zones"><span class="switch" aria-hidden="true"></span></label>
+      <label class="layer"><span><i class="swatch network"></i>거점 연결망 <small>Prim</small></span><input type="checkbox" data-layer="network"><span class="switch" aria-hidden="true"></span></label>
+      <label class="layer"><span><i class="swatch route"></i>현장 접근 경로 <small>A*</small></span><input type="checkbox" data-layer="route" checked><span class="switch" aria-hidden="true"></span></label>
+      <label class="opacity-label" for="opacity">위험도 불투명도<output id="opacity-value">40%</output></label><input id="opacity" type="range" min="0" max="80" value="40">
     </section>
-
-    <section class="method-section" id="methodology" aria-labelledby="method-title">
-      <div class="method-heading">
-        <div>
-          <p class="eyebrow light"><span></span> METHOD &amp; LIMITS</p>
-          <h2 id="method-title">모델의 답보다<br>근거와 한계를 함께 봅니다.</h2>
-        </div>
-        <p>좋은 환경 의사결정은 정확한 예측뿐 아니라 데이터의 시점, 오류 가능성, 지역 주민의 지식을 함께 고려해야 합니다.</p>
-      </div>
-      <div class="method-grid">
-        <article>
-          <span>INPUT</span>
-          <h3>6개 환경 지표</h3>
-          <p>NDVI, 식생 변화율, 강수량, 토양 수분, 지표 온도, 나지 비율을 사용합니다.</p>
-        </article>
-        <article>
-          <span>VALIDATION</span>
-          <h3>오차를 숨기지 않기</h3>
-          <p>혼동행렬·재현율·F1 점수로 고위험 지역을 놓치는 비율까지 함께 검증합니다.</p>
-        </article>
-        <article>
-          <span>CAUTION</span>
-          <h3>상관관계 ≠ 원인</h3>
-          <p>위성에서 보이는 식생 감소만으로 인간 활동이 원인이라고 단정하지 않습니다.</p>
-        </article>
-        <article>
-          <span>PARTICIPATION</span>
-          <h3>현장 지식과 결합</h3>
-          <p>최종 복원지는 생태조사와 주민 협의를 거쳐 결정해야 합니다.</p>
-        </article>
-      </div>
-      <div class="source-line">
-        <span>DATA REFERENCES</span>
-        <a href="https://sdgs.un.org/goals/goal15" target="_blank" rel="noopener">UN SDG 15 ↗</a>
-        <a href="https://developers.google.com/earth-engine/datasets/catalog/sentinel-2" target="_blank" rel="noopener">Sentinel-2 Catalog ↗</a>
-        <a href="https://www.usgs.gov/landsat-missions/landsat-normalized-difference-vegetation-index" target="_blank" rel="noopener">USGS NDVI ↗</a>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <div class="brand footer-brand">
-      <span class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 40 40"><path d="M8 27c8-1 10-7 12-17 7 6 10 12 7 18-3 7-13 7-19-1Z"/><path d="M11 31c5-7 10-11 17-15"/></svg>
-      </span>
-      <span><strong>LAND:15</strong><small>SDG 15.3 EDUCATION PROTOTYPE</small></span>
-    </div>
-    <p>위성영상 × 확률과 통계 × 지구과학 × 세계지리 × 정보</p>
-    <span>2026 · Educational prototype</span>
-  </footer>
-
-  <dialog id="info-dialog">
-    <button class="dialog-close" aria-label="닫기">×</button>
-    <span class="dialog-kicker">ABOUT THIS PROTOTYPE</span>
-    <h2>LAND:15는 무엇인가요?</h2>
-    <p>UN SDG 15.3의 사막화 방지 목표를 교과 융합 프로젝트로 풀어낸 교육용 웹 프로토타입입니다.</p>
-    <ul>
-      <li><strong>확률과 통계</strong> — 베이즈 정리와 모델 평가</li>
-      <li><strong>지구과학</strong> — 위성 원격탐사와 기후·토양</li>
-      <li><strong>세계지리</strong> — 건조지역과 인간의 토지 이용</li>
-      <li><strong>정보</strong> — 분류·셀룰러 오토마타·공간·최적화 알고리즘</li>
-    </ul>
-    <p class="dialog-notice">화면의 수치와 공간은 기능 시연을 위한 합성 데이터이며 실제 정책 결정에 사용할 수 없습니다.</p>
-  </dialog>
-
-  <div class="toast" id="toast" role="status" aria-live="polite">
-    <span>✓</span>
-    <div><strong>분석이 갱신되었습니다</strong><small>현재 화면을 3,072개 격자로 다시 분류했습니다.</small></div>
-  </div>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="app.js?v=geo-field-v1"></script>
-</body>
-</html>
+    <div class="data-note"><span class="note-dot"></span><div><strong>교육용 시뮬레이션</strong><p>배경은 실제 위성영상·표고 자료입니다.<br>환경지표·위험도·비용·복원 효과는 합성값입니다.</p></div></div>
+  </aside>
+  <section class="map-stage" aria-label="3D 분석 지도">
+    <div id="map" tabindex="0" aria-label="입체 지형 지도. 드래그 이동, 오른쪽 드래그 회전, 휠 확대"></div>
+    <div class="map-vignette" aria-hidden="true"></div>
+    <div class="map-heading"><div class="map-kicker"><span class="live-dot"></span><span id="region-kicker">몽골 남부</span><span class="divider"></span>RESTORATION ATLAS</div><h2 id="region-title">GOBI DESERT<span>고비 전이지대</span></h2><p id="map-coordinates">45.0000° N &nbsp; 104.8500° E</p></div>
+    <div class="scene-controls" role="group" aria-label="풍경 밝기"><button data-scene="day" class="active" aria-pressed="true">☀ 낮</button><button data-scene="dusk" aria-pressed="false">◒ 노을</button><button data-scene="night" aria-pressed="false">☾ 밤</button></div>
+    <div class="map-status" id="map-status" role="status">위성영상과 3D 지형을 불러오는 중…</div>
+    <div class="map-error" id="map-error" hidden><strong>지도를 불러오지 못했습니다</strong><p id="map-error-text">네트워크 연결을 확인한 뒤 다시 시도해주세요.</p><button id="retry-btn">다시 불러오기</button></div>
+    <article class="summary-panel glass">
+      <div class="panel-kicker">REGION INSIGHT <span id="analysis-count">3,072 CELLS</span></div>
+      <div class="risk-head"><div><span>고위험 면적 비율</span><strong id="risk-percent">—<small>%</small></strong></div><svg class="risk-ring" viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="32"/><circle id="risk-ring-value" cx="40" cy="40" r="32"/></svg></div>
+      <div class="summary-stat"><span>기준 이상 면적</span><strong id="risk-area">— km²</strong></div>
+      <div class="distribution" id="distribution" aria-label="위험 등급별 면적 비율"></div><div class="distribution-labels" id="distribution-labels"></div>
+      <div class="panel-rule"></div><div class="summary-stat"><span>복원 선정</span><strong><b id="selected-count">—</b>개 구역</strong></div><div class="summary-stat"><span>예산 집행</span><strong id="spent">— / 30억</strong></div><div class="budget-track"><i id="budget-track"></i></div>
+      <button id="plan-btn" class="primary-btn">복원 계획 살펴보기 <span>↗</span></button>
+    </article>
+    <article class="inspect-panel glass" id="inspect-panel" hidden aria-labelledby="inspect-title"><div class="panel-kicker">CELL DIAGNOSIS<button class="close-btn" id="inspect-close" aria-label="셀 상세 닫기">×</button></div><h3 id="inspect-title">선택 셀</h3><p id="cell-id" class="micro"></p><div id="cell-risk" class="cell-risk"></div><dl id="cell-metrics"></dl><p class="micro">모든 지표는 교육용 합성값입니다.</p></article>
+    <div class="map-tools glass" aria-label="지도 조작"><button id="north-btn" aria-label="북쪽 방향으로">N<span>↑</span></button><button id="zoom-in" aria-label="확대">+</button><button id="zoom-out" aria-label="축소">−</button><button id="home-btn" aria-label="선택 지역 전체 보기">⌖</button><button id="fullscreen-btn" aria-label="전체 화면">⛶</button></div>
+    <div class="legend glass"><span>모의 위험등급</span><i style="--c:#61b28e"></i>안정<i style="--c:#e6cc78"></i>주의<i style="--c:#ed925c"></i>위험<i style="--c:#ec615b"></i>심각</div>
+    <div class="view-controls glass" role="group" aria-label="지도 보기"><button id="view-3d" class="active" aria-pressed="true">◈ 3D 지형</button><button id="view-2d" aria-pressed="false">▱ 2D 지도</button><button id="tour-btn" aria-pressed="false">↻ 자동 회전</button></div>
+    <div class="map-caption"><span id="terrain-caption">실제 표고 · 높이 2×</span><span>드래그 이동 · 오른쪽 드래그 회전 · 휠 확대</span></div>
+  </section>
+  <section class="analysis-tray" aria-label="분석 단계와 결과">
+    <div class="tray-top"><div class="tray-title"><span class="eyebrow">FROM DATA TO ACTION</span><h2>어디부터 복원할까요?</h2></div><div class="step-buttons" role="group" aria-label="분석 단계"><button class="active" data-step="risk" aria-pressed="true"><b>01</b> 위험 분류 <small>NB + CA</small></button><button data-step="zones" aria-pressed="false"><b>02</b> 관리구역 <small>VORONOI</small></button><button data-step="plan" aria-pressed="false"><b>03</b> 복원 우선순위 <small>GREEDY</small></button><button data-step="route" aria-pressed="false"><b>04</b> 접근 계획 <small>PRIM + A*</small></button></div></div>
+    <div class="tray-content"><div class="step-explanation"><span id="step-tag" class="pill">01 · NAIVE BAYES + CA</span><h3 id="step-title">한 점의 신호에서, 지역의 패턴으로.</h3><p id="step-description">6개 합성 환경지표를 베이즈 분류기에 입력하고, 주변 8개 셀의 영향을 반영해 위험 분포를 보정합니다.</p><button class="link-btn" id="method-btn">계산 방법과 한계 읽기 ↗</button></div><div class="result-content" id="result-content"></div><div class="scenario-box"><div class="section-heading"><h3>복원 전후 비교</h3><span class="pill">가정 실험</span></div><div class="compare-toggle" role="group" aria-label="복원 전후"><button id="before-btn" class="active" aria-pressed="true">복원 전</button><button id="after-btn" aria-pressed="false">복원 후</button></div><label class="opacity-label" for="effect">선정 셀의 위험 감소 가정<output id="effect-value">30%</output></label><input type="range" id="effect" min="0" max="100" value="60" step="10"><div class="scenario-stats"><span>전체 면적 가중 위험점수</span><strong id="scenario-delta">— → —</strong></div><p class="micro">선정 셀에만 0–50% 감소를 가정합니다.<br>실제 복원 효과나 미래 예측이 아닙니다.</p></div></div>
+    <footer><span><b>LAND:15</b> 토지 황폐화 중립을 위한 작은 실험</span><div><button id="export-btn">분석 CSV 저장 ↓</button><button id="share-btn">설정 링크 복사 ↗</button><button id="sources-btn">데이터 출처</button></div></footer>
+  </section>
+</main>
+<dialog id="about-dialog"><div class="dialog-head"><span class="eyebrow">ABOUT LAND:15</span><button class="close-btn" id="about-close" aria-label="안내 닫기">×</button></div><h2>지형을 탐색하고,<br>복원의 선택을 실험합니다.</h2><p>UN SDG 15.3의 사막화 방지와 토지 황폐화 중립을 주제로 한 교육용 웹앱입니다. 기존 LAND:15의 알고리즘을 입체 지도와 시나리오 비교로 확장했습니다.</p><h3>실제 자료와 합성값</h3><p>위성영상은 Esri World Imagery, 지형은 AWS Terrain Tiles의 표고 자료입니다. 지역마다 시기·해상도가 다르고 실시간 자료가 아닙니다. 위험도, 6개 환경지표, 관리거점, 비용, 주민영향, 복원 효과는 모두 합성값입니다.</p><h3>계산 흐름</h3><ol><li><b>Gaussian Naive Bayes:</b> 식생지수·식생 변화·강수·수분·온도·나지 비율을 4등급으로 분류합니다. 모수는 학습된 값이 아닌 교육용 설정입니다.</li><li><b>셀룰러 오토마타:</b> 주변 8개 셀과 환경 스트레스를 반영합니다. 세대 수는 실제 연수가 아닙니다. 0세대는 이웃 갱신 전의 초기 위험점수입니다.</li><li><b>Voronoi / Prim:</b> 좌표에 고정된 가상 거점에 가장 가까운 셀을 배정하고, 지표면 거리가 최소인 거점 연결망을 계산합니다.</li><li><b>Greedy:</b> 모의 편익/비용 순으로 예산 안에서 최대 7개 셀을 선택합니다. 전역 최적해를 보장하지 않습니다.</li><li><b>A*:</b> 1순위 셀에서 가장 가까운 거점을 출발점으로, 위험과 나지 비율에 따른 4방향 격자 비용을 최소화합니다. 실제 도로·경사·통제는 반영하지 않습니다.</li></ol><h3>3D와 비교의 의미</h3><p>지형 높이는 가독성을 위해 2배로 강조합니다. 낮·노을·밤은 화면 연출이며 분석값을 바꾸지 않습니다. 복원 후에는 선정 셀의 위험점수만 설정한 비율만큼 낮춥니다. NDVI·면적·비용이 실제로 변화했다는 뜻은 아닙니다.</p><p>분석은 고정 구역 64 × 48개 셀에서 수행합니다. 카메라 조작은 결과를 바꾸지 않습니다. 새 구역을 지정하거나 ‘현재 화면 분석’을 누르면 다시 계산하며, 이때 셀 크기와 경계 효과로 결과가 달라질 수 있습니다. 모의 기간은 관측일 조회가 아닌 합성 건조 압력의 입력값입니다.</p><h3>원본과 참고자료</h3><ul class="source-list"><li><a href="https://github.com/leejuhan-1214/ToGangDDaKK" target="_blank" rel="noopener">원본 LAND:15 저장소 ↗</a></li><li><a href="https://seoul-3d-atlas.synabreu.chatgpt.site/" target="_blank" rel="noopener">서울 3D Atlas — 지도 중심 탐색 참고 ↗</a></li><li><a href="https://x.com/synabreu/status/2096557555086725159" target="_blank" rel="noopener">제공된 X 링크 — 원문 접근 제한 ↗</a></li><li><a href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9" target="_blank" rel="noopener">Esri World Imagery ↗</a></li><li><a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener">AWS Terrain Tiles / Mapzen 및 원자료 출처 ↗</a></li><li><a href="https://maplibre.org/" target="_blank" rel="noopener">MapLibre GL JS ↗</a></li><li><a href="https://sdgs.un.org/goals/goal15" target="_blank" rel="noopener">UN SDG 15 ↗</a></li></ul></dialog>
+<div id="toast" class="toast" role="status" hidden></div>
+<script src="vendor/maplibre-gl.js"></script><script type="module" src="app.mjs"></script>
+</body></html>
