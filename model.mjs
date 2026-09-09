@@ -281,19 +281,23 @@ export function areaKm2(b) {
  return 6371**2*Math.abs(Math.sin(b.north*Math.PI/180)-Math.sin(b.south*Math.PI/180))*Math.abs(b.east-b.west)*Math.PI/180;
 }
 export function createManagementCenters(b) {
- // Global degree lattice: hubs do not shift when the camera rotates, pans or changes zoom.
- const step=1, centers=[];
- for(let lat=Math.floor(b.south/step)-1;lat<=Math.ceil(b.north/step)+1;lat++){
-  for(let lng=Math.floor(b.west/step)-1;lng<=Math.ceil(b.east/step)+1;lng++){
-   const coords=[lng+0.2+hashCoordinate(normalizeLongitude(lng),lat,101)*0.6,lat+0.2+hashCoordinate(normalizeLongitude(lng),lat,211)*0.6];
-   centers.push({coords,index:centers.length,label:`H${centers.length+1}`,visible:coords[0]>=b.west&&coords[0]<=b.east&&coords[1]>=b.south&&coords[1]<=b.north});
+ // Quantized, globe-anchored spacing: bounded work from street zoom to world zoom.
+ const levelX=clamp(Math.floor(Math.log2(360/((b.east-b.west)/8))),0,24);
+ const levelY=clamp(Math.floor(Math.log2(180/((b.north-b.south)/6))),0,24);
+ const columns=2**levelX, rows=2**levelY, stepX=360/columns, stepY=180/rows, centers=[];
+ for(let row=Math.max(0,Math.floor((b.south+90)/stepY)-1);row<=Math.min(rows-1,Math.floor((b.north+90)/stepY)+1);row++){
+  for(let col=Math.floor((b.west+180)/stepX)-1;col<=Math.floor((b.east+180)/stepX)+1;col++){
+   const wrapped=((col%columns)+columns)%columns;
+   const coords=[-180+(col+0.2+hashCoordinate(wrapped,row,101)*0.6)*stepX,-90+(row+0.2+hashCoordinate(wrapped,row,211)*0.6)*stepY];
+   if(Math.abs(coords[1])>85.0511287798066)continue;
+   centers.push({coords,index:centers.length,label:`H${levelX}-${levelY}-${wrapped}-${row}`,colorIndex:Math.floor(hashCoordinate(wrapped,row,307)*6),visible:coords[0]>=b.west&&coords[0]<=b.east&&coords[1]>=b.south&&coords[1]<=b.north});
   }
  }
  return centers;
 }
 export function analyze(bounds, {years=3,generations=3}={}) {
  if (![bounds.south,bounds.north,bounds.west,bounds.east,years,generations].every(Number.isFinite)) throw Error("Invalid analysis inputs");
- if(bounds.north<=bounds.south||bounds.east<=bounds.west||bounds.north>80||bounds.south< -80||bounds.east-bounds.west>24||bounds.north-bounds.south>16) throw Error("분석 구역을 가로 24°, 세로 16° 이내로 좁혀주세요.");
+ if(bounds.north<=bounds.south||bounds.east<=bounds.west||bounds.north>85.0511287798066||bounds.south< -85.0511287798066||bounds.east-bounds.west>360) throw Error("지도 표시에 맞는 위·경도 범위가 필요합니다.");
  const centers=createManagementCenters(bounds), cells=[];
  for(let row=0;row<GRID_ROWS;row++)for(let col=0;col<GRID_COLS;col++)cells.push(createCellData(row,col,bounds,years,centers));
  applyCellularAutomata(cells,clamp(Math.round(generations),0,8));

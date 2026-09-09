@@ -31,7 +31,9 @@ jobs:
         run: |
           node --check app.mjs
           node --check model.mjs
-          node --test model.test.mjs
+          node --check viewport.mjs
+          node --check analysis.worker.mjs
+          node --test model.test.mjs viewport.test.mjs
           node build.mjs
       - name: Configure Pages
         uses: actions/configure-pages@v5
