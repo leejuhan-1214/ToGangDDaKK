@@ -34,6 +34,7 @@ jobs:
           node --check viewport.mjs
           node --check analysis.worker.mjs
           node --check land-mask.mjs
+          node --check ui-controls.mjs
           node --test model.test.mjs viewport.test.mjs water.test.mjs land-mask.test.mjs
           node build.mjs
       - name: Configure Pages

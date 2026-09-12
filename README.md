@@ -19,7 +19,7 @@ node server.mjs
 - 고비·사헬·아랄해의 실제 위성영상과 표고 기반 3D 지도, 2D 전환, 밝기 연출, 자동 회전, 전체 화면
 - 현재 화면 전체의 64 × 48 셀. 이동·확대·축소·회전·창 크기 변경에 따라 자동 분석
 - 실제 해안선·주요 호수 경계로 셀을 잘라 육지에만 위험도를 표시. 수역은 위험점수 없음으로 처리하고 통계·복원 후보·CSV에서 제외
-- 21st.dev의 Expandable Tabs와 Dock 패턴을 참고한 고정 화면. 구역·분석·복원·레이어 탭과 후보 페이지 전환으로 본문 스크롤 없이 조작
+- 21st.dev의 검정·회색·파란색 디자인, Motion Primitives Dock 공개 소스의 확대·스프링·툴팁을 적용한 고정 화면. 구역·분석·복원·레이어 탭과 후보 페이지 전환으로 본문 스크롤 없이 조작
 - 자동 분석은 기본으로 켜짐. 지도에서 두 모서리를 선택하면 고정 구역으로 전환하며, 자동 분석을 다시 켜면 화면 전체를 따라감
 - NB + CA, Voronoi, Greedy, Prim + A*의 4개 단계와 레이어
 - 위험 기준·가상 예산·모의 기간·CA 세대 조절
@@ -39,6 +39,8 @@ Esri World Imagery와 AWS Terrain Tiles의 표고 자료는 실제 자료이며 
 ## 구조
 
 - `index.html`, `styles.css`: 한국어 지도 중심 인터페이스
+- `ui-controls.mjs`, `ui-controls.css`: Dock 포팅과 펼쳐지는 탐색 탭
+- `vendor/ui/`: Dock 원본 소스, MIT 라이선스, 적용 내역
 - `app.mjs`: MapLibre 레이어, 화면 상태, 사용자 조작, 내보내기
 - `model.mjs`: 원본을 개선한 독립 계산 모듈
 - `analysis.worker.mjs`: 지도 움직임과 분리된 자동 분석 계산
@@ -65,7 +67,7 @@ node build.mjs
 
 WebMCP 지원 브라우저에서 `read_land15_analysis`, `configure_land15_scenario`가 조건부 등록됩니다. 지원하지 않는 브라우저에서는 일반 UI에 영향을 주지 않습니다.
 
-2026-09-12 검증: 37개 자동 테스트 통과. 실제 브라우저에서 한국 해안의 수역 제외, 순수 해양 화면의 빈 분석 상태, 지도 이동 후 자동 갱신, 복원 후보 페이지 전환을 확인했습니다. 1366×768·1366×600·390×667·844×390에서 네 탭의 조작 버튼이 화면 밖으로 밀리지 않는지 확인했습니다. 긴 출처·계산 설명은 선택해서 여는 안내 대화상자에서 읽습니다.
+2026-09-13 검증: 37개 자동 테스트 통과. 실제 브라우저에서 한국 해안의 수역 제외, 순수 해양 화면의 빈 분석 상태, 지도 이동 후 자동 갱신, 복원 후보 페이지 전환을 확인했습니다. 1366×768·1366×600·390×667·844×390에서 네 탭의 조작 버튼이 화면 밖으로 밀리지 않는지 확인했습니다. 21st.dev 기반 새 화면에서도 동일한 네 가지 화면 크기로 각 탭을 검사했습니다. 긴 출처·계산 설명은 선택해서 여는 안내 대화상자에서 읽습니다.
 
 ## 알려진 한계
 
@@ -86,7 +88,7 @@ WebMCP 지원 브라우저에서 `read_land15_analysis`, `configure_land15_scena
 - 표고: https://registry.opendata.aws/terrain-tiles/ (원자료의 출처·라이선스 포함)
 - 렌더러: https://maplibre.org/ (vendor/LICENSE-maplibre.txt)
 - 육지·주요 호수: https://www.naturalearthdata.com/downloads/10m-physical-vectors/ (public domain; data/ 출처 문서 참조)
-- UI 참고: [21st.dev Expandable Tabs — Victor Welander](https://21st.dev/@victorwelander/components/expandable-tabs), [Dock — Motion Primitives](https://21st.dev/@ibelick/components/dock). MIT로 공개된 패턴을 참고해 vanilla HTML/CSS/JS로 직접 구현했으며 React 컴포넌트를 설치하거나 원본 코드를 복사하지 않았습니다.
+- UI 참고: [21st.dev Expandable Tabs — Victor Welander](https://21st.dev/@victorwelander/components/expandable-tabs), [Dock — Motion Primitives](https://21st.dev/@ibelick/components/dock). Dock의 실제 MIT 공개 소스를 vanilla HTML/CSS/JS에 맞게 포팅했습니다. 원본의 거리 보간, 스프링 계수와 아이콘 비율을 적용했으며 소스·라이선스는 `vendor/ui/`에 보관합니다. Expandable Tabs는 공개 미리보기의 동작을 참고해 직접 작성했습니다.
 - UN SDG 15: https://sdgs.un.org/goals/goal15
 
 원본 저장소의 저작권·이용조건을 유지하며, 참고 Atlas의 코드·데이터는 복제하지 않았습니다. 원본에 없는 별도 오픈소스 라이선스를 이 프로젝트 전체에 임의로 부여하지 않습니다.

@@ -1,5 +1,6 @@
 import {analyze,regions,classInfo,riskClassFromScore,greedyPlan,restorationScores,managementNetwork,routeToTarget,featureCollection,polygon,distanceKm,clamp} from './model.mjs';
 import {loadLandMask,isLand} from './land-mask.mjs';
+import {enhance21stControls} from './ui-controls.mjs';
 import {viewportBounds,sameBounds,createViewportScheduler} from './viewport.mjs';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const format=new Intl.NumberFormat('ko-KR',{maximumFractionDigits:0});
@@ -10,6 +11,7 @@ let analysisWorker=null,workerUnavailable=false,workerSequence=0;
 const workerJobs=new Map();
 let resultPage=0;
 function setPane(pane){
+ $('#inspector-heading').textContent={explore:'지역 탐색',analysis:'위험 분석',restore:'복원 시나리오',layers:'지도 설정'}[pane];
  $('.workspace').classList.remove('panel-collapsed');
  $('#panel-toggle').setAttribute('aria-expanded','true');
  $$('[data-pane]').forEach(button=>{const active=button.dataset.pane===pane;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;});
@@ -97,7 +99,7 @@ function replan(){viewport?.invalidate();plan=greedyPlan(analysis.cells,state.bu
 function applyScenario(after){state.after=after;pressed($('#before-btn'),!after);pressed($('#after-btn'),after);if(state.ready)setData('cells',riskData());renderSummary();if(state.selected!==null)inspectCell(state.selected);}
 function syncControls(){for(const key of ['threshold','budget','years','generations','effect'])$('#'+key).value=state[key];$('#threshold-value').innerHTML=`${state.threshold}<span> / 100</span>`;$('#budget-value').innerHTML=`${state.budget}<span>억 원</span>`;$('#effect-value').textContent=`${state.effect/2}%`;}
 function setRegionCamera(animate=true){if(!state.ready)return;stopTour();const b=state.focusBounds;map.fitBounds([[b.west,b.south],[b.east,b.north]],{padding:window.innerWidth>850?{top:95,bottom:135,left:365,right:75}:{top:90,bottom:130,left:25,right:60},pitch:state.is3d?55:0,bearing:state.is3d?-15:0,duration:animate&&!reduced.matches?1400:0});}
-function regionIdentity(){const r=regions[state.region],live=state.scope==='viewport';$('#region-title').replaceChildren(document.createTextNode(live?'LIVE ATLAS':state.custom?'CUSTOM AREA':r.english),Object.assign(document.createElement('span'),{textContent:live?'현재 지도 전체 분석':state.custom?'사용자 지정 구역':r.name}));$('#region-kicker').textContent=live?'이동하는 화면을 따라':state.custom?'직접 선택한 분석 범위':r.sub;$('#area-status').textContent=state.autoViewport?'이동·확대·축소할 때 화면 전체를 자동 분석':'분석 구역 고정 · 자동 분석을 켜면 화면을 따라갑니다';$('#auto-viewport').checked=state.autoViewport;$$('[data-region]').forEach(b=>pressed(b,!state.custom&&b.dataset.region===state.region));}
+function regionIdentity(){const r=regions[state.region],live=state.scope==='viewport';$('#region-title').replaceChildren(document.createTextNode(live?'현재 지도':state.custom?'선택 구역':r.name),Object.assign(document.createElement('span'),{textContent:live?'이동하는 화면을 육지 기준으로 분석합니다':state.custom?'선택한 육지의 변화를 살펴보세요':'육지의 변화를 탐색하세요'}));$('#region-kicker').textContent=live?'이동하는 화면을 따라':state.custom?'직접 선택한 분석 범위':r.sub;$('#area-status').textContent=state.autoViewport?'이동·확대·축소할 때 화면 전체를 자동 분석':'분석 구역 고정 · 자동 분석을 켜면 화면을 따라갑니다';$('#auto-viewport').checked=state.autoViewport;$('.live-indicator').textContent=state.autoViewport?'자동 갱신':'구역 고정';$$('[data-region]').forEach(b=>pressed(b,!state.custom&&b.dataset.region===state.region));}
 function selectRegion(key){viewport?.invalidate();cancelDrawing();state.region=key;state.custom=false;state.scope='preset';state.autoViewport=true;state.bounds={...regions[key].bounds};state.focusBounds={...state.bounds};state.selected=null;$('#inspect-panel').hidden=true;regionIdentity();recompute();setRegionCamera();}
 function inspectCell(index){const c=analysis.cells[index];if(!c)return;if(!c.isLand){closeInspection();return toast('수역 · 바다와 호수는 사막화 분석에서 제외됩니다.');}state.selected=index;const chosen=plan.selected.some(p=>p.index===index);const score=c.riskScore*(state.after&&chosen?1-state.effect/200:1);$('#inspect-panel').hidden=false;$('#inspect-title').textContent=chosen?'복원 선정 셀':'선택 셀';$('#cell-id').textContent=c.id;$('#cell-risk').innerHTML=`${(score*100).toFixed(1)}<small>${classInfo[riskClassFromScore(score)].label} · 모의 위험점수</small>`;$('#cell-risk').style.color=classInfo[riskClassFromScore(score)].color;
  const items=[['NDVI',c.ndvi.toFixed(2)],['식생 변화',`${c.ndviTrend.toFixed(1)}%`],['월 강수량',`${c.rainfall.toFixed(1)} mm`],['토양 수분',`${c.moisture.toFixed(1)}%`],['지표 온도',`${c.temperature.toFixed(1)}°C`],['나지 비율',`${c.bareSoil.toFixed(1)}%`],['NB / CA 점수',`${(c.nbRiskScore*100).toFixed(1)} / ${(c.riskScore*100).toFixed(1)}`],['셀의 육지 면적',`${c.area.toFixed(2)} km²`],['가상 비용',`${c.cost.toFixed(2)}억 원`]];$('#cell-metrics').innerHTML=items.map(([label,value])=>`<dt>${label}</dt><dd>${value}</dd>`).join('');if(state.ready)setData('selected',featureCollection([polygon(c)]));}
@@ -187,6 +189,8 @@ async function startApp(){
  $('#map-status').textContent='해안선과 호수 경계를 불러오는 중…';
  await loadLandMask();
  $('#map-status').textContent='위성영상과 지형을 불러오는 중…';
+ const cleanUpControls=enhance21stControls();
+ window.addEventListener('pagehide',event=>{if(!event.persisted)cleanUpControls();},{once:true});
  restoreSettings();syncControls();bindControls();recompute();regionIdentity();pressed($('#before-btn'),!state.after);pressed($('#after-btn'),state.after);pressed($('#view-3d'),state.is3d);pressed($('#view-2d'),!state.is3d);$('#terrain-caption').textContent=state.is3d?'실제 표고 · 높이 2×':'평면 지도 · 지형 강조 없음';initMap();registerAgentTools();
  }catch(error){
  $('#map-status').hidden=true;$('#map-error').hidden=false;$('#map-error-text').textContent='육지 경계를 불러오지 못해 분석을 중지했습니다. '+error.message;
