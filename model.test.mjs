@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { readFile } from 'node:fs/promises';
+import { loadLandMask, isLand } from './land-mask.mjs';
 import {
   GRID_COLS, GRID_ROWS, gaussianClassify, applyCellularAutomata,
   geographicField, createManagementCenters, analyze, regions, areaKm2,
   distanceKm, greedyPlan, restorationScores, primEdges, aStar,
 } from './model.mjs';
+
+await loadLandMask(JSON.parse(await readFile(new URL('./data/land-mask.json', import.meta.url), 'utf8')));
 
 const near = (actual, expected, tolerance = 1e-10) =>
   assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} != ${expected} (tolerance ${tolerance})`);
@@ -76,7 +80,7 @@ test('Raw coordinate field is deterministic and periodic over longitude wraps', 
 });
 
 const gobi = analyze(regions.gobi.bounds);
-test('Spherical area equals sum of grid areas and matches independent latitude integration', () => {
+test('Land area equals the clipped grid sum; viewport area matches independent latitude integration', () => {
   for (const bounds of [regions.gobi.bounds, regions.sahel.bounds, { south: -1, north: 1, west: 179, east: 181 }, { south: 72, north: 78, west: 10, east: 18 }]) {
     const result = analyze(bounds);
     near(sum(result.cells.map(cell => cell.area)), result.area, result.area * 1e-12);
@@ -86,14 +90,21 @@ test('Spherical area equals sum of grid areas and matches independent latitude i
     for (let i=1;i<n;i++) integral += (i%2 ? 4 : 2) * Math.cos(low+i*step);
     const expected = 6371**2 * radians(bounds.east-bounds.west) * integral * step / 3;
     near(areaKm2(bounds), expected, expected * 1e-12);
+    near(result.viewportArea, expected, expected * 1e-12);
+    near(result.area + result.waterArea, result.viewportArea, result.viewportArea * 1e-12);
     assert.equal(result.cells.length, GRID_COLS*GRID_ROWS);
     assert.equal(new Set(result.cells.map(c => c.index)).size, result.cells.length);
-    assert.ok(result.cells.every(c => Number.isFinite(c.riskScore) && c.riskScore >= 0 && c.riskScore <= 1 && c.area > 0));
+    assert.equal(result.landCellCount, result.cells.filter(c => c.isLand).length);
+    assert.ok(result.cells.every(c => c.isLand
+      ? Number.isFinite(c.riskScore) && c.riskScore >= 0 && c.riskScore <= 1 && c.area > 0
+      : c.riskScore === null && c.area === 0));
   }
 });
 test('Each Voronoi zone picks nearest geographic hub, including high latitudes', () => {
-  for (const result of [gobi, analyze({south:72,north:75,west:10,east:18})]) {
-    for (const cell of result.cells.filter((_,index) => index % 19 === 0)) {
+  for (const result of [gobi, analyze({south:77,north:80,west:10,east:18})]) {
+    for (const cell of result.cells.filter((cell,index) => cell.isLand && index % 19 === 0)) {
+      assert.ok(isLand(cell.coords));
+      if (!result.centers.length) { assert.equal(cell.zone, null); continue; }
       const expected = result.centers.reduce((best, hub) => sphereDistance(cell.coords, hub.coords) < sphereDistance(cell.coords, best.coords) ? hub : best);
       assert.equal(cell.zone, expected.index);
       near(distanceKm(cell.coords, expected.coords), sphereDistance(cell.coords, expected.coords), 1e-9);

@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { loadLandMask, isLand } from './land-mask.mjs';
 import { createViewportScheduler, viewportBounds, sameBounds, MERCATOR_LATITUDE } from './viewport.mjs';
 import { analyze, GRID_COLS, GRID_ROWS, areaKm2 } from './model.mjs';
+
+await loadLandMask(JSON.parse(await readFile(new URL('./data/land-mask.json', import.meta.url), 'utf8')));
 
 const flush = async () => { for (let i = 0; i < 8; i += 1) await Promise.resolve(); };
 
@@ -227,24 +231,39 @@ for (const [name, raw] of cases) {
     const result = analyze(b);
     assert.equal(result.cells.length, GRID_COLS * GRID_ROWS);
     assert.equal(result.cells.length, 3072);
-    assert.ok(result.centers.length > 0);
     assert.ok(result.centers.length <= 99, `${result.centers.length} centers`);
-    assert.ok(result.centers.some(center => center.visible), 'at least one hub is inside the viewport');
     assert.equal(result.cells[0].bounds.west, b.west);
     assert.equal(result.cells[0].bounds.north, b.north);
     const last = result.cells.at(-1);
     assert.ok(Math.abs(last.bounds.east - b.east) < 1e-10);
     assert.ok(Math.abs(last.bounds.south - b.south) < 1e-10);
     const sum = result.cells.reduce((total, cell) => total + cell.area, 0);
-    assert.ok(Math.abs(sum - areaKm2(b)) <= Math.max(1e-12, areaKm2(b) * 1e-6), `${sum} vs ${areaKm2(b)}`);
+    assert.ok(Math.abs(sum - result.area) <= Math.max(1e-12, result.area * 1e-6), `${sum} vs ${result.area}`);
+    assert.ok(Math.abs(result.viewportArea - areaKm2(b)) <= Math.max(1e-12, areaKm2(b) * 1e-6));
+    assert.ok(result.area <= result.viewportArea * (1 + 1e-6));
+    if (name === 'world') {
+      assert.ok(result.area > 120_000_000 && result.area < 160_000_000, `${result.area} km2 global land`);
+      assert.ok(result.landCellCount > 0 && result.landCellCount < result.cells.length);
+    }
+    if (name === 'near north pole') assert.equal(result.landCellCount, 0);
+    if (name === 'near south pole') assert.ok(result.landCellCount > result.cells.length / 2, 'Antarctic land remains covered; ice shelf water is excluded');
+    if (name === 'tiny zoom') assert.equal(result.landCellCount, result.cells.length);
     for (const cell of result.cells) {
-      assert.ok(Number.isFinite(cell.riskScore) && cell.riskScore >= 0 && cell.riskScore <= 1);
       assert.ok(cell.bounds.east > cell.bounds.west && cell.bounds.north > cell.bounds.south);
-      assert.ok(cell.area > 0 && Number.isFinite(cell.area));
+      if (cell.isLand) {
+        assert.ok(Number.isFinite(cell.riskScore) && cell.riskScore >= 0 && cell.riskScore <= 1);
+        assert.ok(cell.area > 0 && Number.isFinite(cell.area));
+        assert.ok(isLand(cell.coords), `${name}: land sample ${cell.coords}`);
+      } else {
+        assert.equal(cell.riskScore, null);
+        assert.equal(cell.area, 0);
+        assert.equal(cell.geometry, null);
+      }
     }
     for (const center of result.centers) {
       assert.ok(Math.abs(center.coords[1]) <= MERCATOR_LATITUDE);
       assert.ok(center.coords.every(Number.isFinite));
+      assert.ok(isLand(center.coords));
     }
   });
 }

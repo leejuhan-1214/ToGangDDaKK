@@ -1,4 +1,5 @@
 // Adapted from leejuhan-1214/ToGangDDaKK. All environmental and decision values are synthetic.
+import {clipCell, isLand, isLandSegment} from './land-mask.mjs';
 export const GRID_COLS = 64, GRID_ROWS = 48;
 export const classInfo = [{label:"안정",color:"#61b28e"},{label:"주의",color:"#e6cc78"},{label:"위험",color:"#ed925c"},{label:"심각",color:"#ec615b"}];
 export const regions = {
@@ -97,6 +98,7 @@ function gaussianClassify(features) {
 }
 
 function riskClassFromScore(score) {
+  if (score === null || !Number.isFinite(score)) return null;
   if (score < 0.22) return 0;
   if (score < 0.46) return 1;
   if (score < 0.70) return 2;
@@ -105,7 +107,7 @@ function riskClassFromScore(score) {
 
 export function applyCellularAutomata(cells, generations = 3) {
   const severitySeed = [0.12, 0.36, 0.64, 0.86];
-  let scores = cells.map(cell => clamp(
+  let scores = cells.map(cell => cell.isLand === false ? null : clamp(
     severitySeed[cell.classIndex] * 0.72 + cell.riskScore * 0.28,
     0.02,
     0.98
@@ -114,6 +116,7 @@ export function applyCellularAutomata(cells, generations = 3) {
   for (let generation = 0; generation < generations; generation += 1) {
     const nextScores = [...scores];
     cells.forEach((cell, index) => {
+      if (cell.isLand === false) return;
       const neighbors = [];
       for (let rowOffset = -1; rowOffset <= 1; rowOffset += 1) {
         for (let colOffset = -1; colOffset <= 1; colOffset += 1) {
@@ -121,11 +124,12 @@ export function applyCellularAutomata(cells, generations = 3) {
           const row = cell.row + rowOffset;
           const col = cell.col + colOffset;
           if (row < 0 || row >= GRID_ROWS || col < 0 || col >= GRID_COLS) continue;
-          neighbors.push(scores[row * GRID_COLS + col]);
+          const score = scores[row * GRID_COLS + col];
+          if (Number.isFinite(score)) neighbors.push(score);
         }
       }
 
-      const neighborMean = neighbors.reduce((sum, score) => sum + score, 0) / Math.max(1, neighbors.length);
+      const neighborMean = neighbors.length ? neighbors.reduce((sum, score) => sum + score, 0) / neighbors.length : scores[index];
       const severeNeighbors = neighbors.filter(score => score >= 0.65).length;
       const environmentalStress = clamp(
         ((cell.bareSoil - 18) / 72 + (30 - cell.moisture) / 27 + (cell.temperature - 20) / 23) / 3,
@@ -143,6 +147,7 @@ export function applyCellularAutomata(cells, generations = 3) {
   }
 
   cells.forEach((cell, index) => {
+    if (cell.isLand === false) return;
     cell.nbClassIndex = cell.classIndex;
     cell.nbRiskScore = cell.riskScore;
     cell.riskScore = scores[index];
@@ -163,7 +168,15 @@ function createCellData(row, col, bounds, years, centers) {
   const cellWest = west + col * lngStep;
   const cellEast = west + (col + 1) * lngStep;
   const cellBounds = {south:cellSouth, north:cellNorth, west:cellWest, east:cellEast};
-  const cellCenter = {lat:(cellNorth+cellSouth)/2, lng:(cellWest+cellEast)/2};
+  const land = clipCell(cellBounds);
+  const midpoint = [(cellWest+cellEast)/2, (cellNorth+cellSouth)/2];
+  if (!land) return {
+    row, col, bounds: cellBounds, latlng: {lng:midpoint[0],lat:midpoint[1]}, coords:midpoint,
+    id:geographicCellId(midpoint[1],midpoint[0]), isLand:false, geometry:null, area:0,
+    riskScore:null, nbRiskScore:null, classIndex:null, nbClassIndex:null, zone:null,
+  };
+  const sample = land.point || midpoint;
+  const cellCenter = {lng:sample[0],lat:sample[1]};
   const normalizedLng = normalizeLongitude(cellCenter.lng);
   const normalizedPoint = { x: (col + 0.5) / GRID_COLS, y: (row + 0.5) / GRID_ROWS };
   const periodYears = years;
@@ -202,12 +215,12 @@ function createCellData(row, col, bounds, years, centers) {
   const zone = centers.reduce((best, center) => {
     const distance = distanceKm([cellCenter.lng, cellCenter.lat], center.coords);
     return distance < best.distance ? { colorIndex: center.index, distance } : best;
-  }, { colorIndex: 0, distance: Infinity }).colorIndex;
+  }, { colorIndex: null, distance: Infinity }).colorIndex;
 
   return {
     row, col, x: normalizedPoint.x, y: normalizedPoint.y, zone, ndvi, ndviTrend, rainfall, moisture,
     temperature, bareSoil, ecological, people, cost, riskScore, bounds: cellBounds,
-    latlng: cellCenter, ...classification,
+    latlng: cellCenter, ...classification, isLand:true, geometry:land.geometry, area:land.areaKm2,
     id: geographicCellId(cellCenter.lat, normalizedLng)
   };
 }
@@ -232,7 +245,8 @@ export function primEdges(points) {
   return edges;
 }
 
-export function aStar(cells, start, goal) {
+export function aStar(cells, start, goal, canTravel = () => true) {
+  if (!start || !goal || start.isLand === false || goal.isLand === false) return [];
   const byKey = new Map(cells.map(cell => [`${cell.row},${cell.col}`, cell]));
   const key = cell => `${cell.row},${cell.col}`;
   const open = [start];
@@ -258,7 +272,7 @@ export function aStar(cells, start, goal) {
     closed.add(currentKey);
     [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dr, dc]) => {
       const neighbor = byKey.get(`${current.row + dr},${current.col + dc}`);
-      if (!neighbor || closed.has(key(neighbor))) return;
+      if (!neighbor || neighbor.isLand === false || closed.has(key(neighbor)) || !canTravel(current, neighbor)) return;
       const tentative = (g.get(currentKey) ?? Infinity) + 1 + neighbor.riskScore * 1.4 + neighbor.bareSoil / 130;
       if (tentative < (g.get(key(neighbor)) ?? Infinity)) {
         cameFrom.set(key(neighbor), current);
@@ -289,7 +303,7 @@ export function createManagementCenters(b) {
   for(let col=Math.floor((b.west+180)/stepX)-1;col<=Math.floor((b.east+180)/stepX)+1;col++){
    const wrapped=((col%columns)+columns)%columns;
    const coords=[-180+(col+0.2+hashCoordinate(wrapped,row,101)*0.6)*stepX,-90+(row+0.2+hashCoordinate(wrapped,row,211)*0.6)*stepY];
-   if(Math.abs(coords[1])>85.0511287798066)continue;
+   if(Math.abs(coords[1])>85.0511287798066 || !isLand(coords))continue;
    centers.push({coords,index:centers.length,label:`H${levelX}-${levelY}-${wrapped}-${row}`,colorIndex:Math.floor(hashCoordinate(wrapped,row,307)*6),visible:coords[0]>=b.west&&coords[0]<=b.east&&coords[1]>=b.south&&coords[1]<=b.north});
   }
  }
@@ -301,11 +315,12 @@ export function analyze(bounds, {years=3,generations=3}={}) {
  const centers=createManagementCenters(bounds), cells=[];
  for(let row=0;row<GRID_ROWS;row++)for(let col=0;col<GRID_COLS;col++)cells.push(createCellData(row,col,bounds,years,centers));
  applyCellularAutomata(cells,clamp(Math.round(generations),0,8));
- cells.forEach((c,i)=>{c.index=i;c.area=areaKm2(c.bounds);c.coords=[c.latlng.lng,c.latlng.lat];});
- return {bounds:{...bounds},cells,centers,area:areaKm2(bounds)};
+ cells.forEach((c,i)=>{c.index=i;c.coords=[c.latlng.lng,c.latlng.lat];});
+ const area=cells.reduce((total,c)=>total+c.area,0), viewportArea=areaKm2(bounds);
+ return {bounds:{...bounds},cells,centers,area,viewportArea,waterArea:Math.max(0,viewportArea-area),landCellCount:cells.filter(c=>c.isLand).length};
 }
 export function greedyPlan(cells,budget,threshold) {
- const candidates=cells.filter(c=>c.riskScore*100>=threshold).map(c=>{
+ const candidates=cells.filter(c=>c.isLand!==false&&Number.isFinite(c.riskScore)&&c.riskScore*100>=threshold).map(c=>{
  const benefit=c.riskScore*(0.62+c.ecological*0.5)*(1+c.people/16);
  return {...c,benefit,greedyScore:benefit/c.cost};
  }).sort((a,b)=>b.greedyScore-a.greedyScore||a.index-b.index);
@@ -316,19 +331,24 @@ export function greedyPlan(cells,budget,threshold) {
 export function restorationScores(cells,selected,effect) {
  const chosen=new Set(selected.map(c=>c.index)), amount=clamp(effect,0,100)/100;
  // A teaching assumption only: selected cells reduce 0–50% of their baseline risk.
- return cells.map(c=>c.riskScore*(chosen.has(c.index)?1-0.5*amount:1));
+ return cells.map(c=>c.isLand===false?null:c.riskScore*(chosen.has(c.index)?1-0.5*amount:1));
 }
 export function routeToTarget(analysis,target) {
  if(!target)return [];
  const visible=analysis.centers.filter(c=>c.visible);
  const hub=visible.reduce((best,c)=>!best||distanceKm(c.coords,target.coords)<distanceKm(best.coords,target.coords)?c:best,null);
  if(!hub)return [];
- const start=analysis.cells.reduce((best,c)=>distanceKm(c.coords,hub.coords)<distanceKm(best.coords,hub.coords)?c:best,analysis.cells[0]);
- return aStar(analysis.cells,start,target);
+ const land=analysis.cells.filter(c=>c.isLand);
+ const start=land.reduce((best,c)=>!best||distanceKm(c.coords,hub.coords)<distanceKm(best.coords,hub.coords)?c:best,null);
+ return aStar(analysis.cells,start,target,(a,b)=>isLandSegment(a.coords,b.coords));
+}
+// A land-only forest: disconnected islands are not presented as traversable links.
+export function managementNetwork(centers) {
+ return primEdges(centers).filter(e=>Math.abs(centers[e.from].coords[0]-centers[e.to].coords[0])<=180&&isLandSegment(centers[e.from].coords,centers[e.to].coords));
 }
 export function featureCollection(features=[]) {return {type:"FeatureCollection",features};}
 export function polygon(cell,properties={}) {
  const b=cell.bounds;
- return {type:"Feature",id:cell.index,properties:{index:cell.index,...properties},geometry:{type:"Polygon",coordinates:[[[b.west,b.south],[b.east,b.south],[b.east,b.north],[b.west,b.north],[b.west,b.south]]]}};
+ return {type:"Feature",id:cell.index,properties:{index:cell.index,...properties},geometry:cell.isLand===false?null:cell.geometry||{type:"Polygon",coordinates:[[[b.west,b.south],[b.east,b.south],[b.east,b.north],[b.west,b.north],[b.west,b.south]]]}};
 }
 export {gaussianClassify,riskClassFromScore,geographicField,geographicCellId};
