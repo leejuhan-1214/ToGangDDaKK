@@ -4,7 +4,7 @@ const readText=async file=>(await readFile(file,'utf8')).replace(/\r\n?/g,'\n');
 await mkdir('dist',{recursive:true});
 await mkdir('dist/data',{recursive:true});
 const modules=['app.mjs','model.mjs','viewport.mjs','analysis.worker.mjs','land-mask.mjs','ui-controls.mjs','explanation.mjs','history-view.mjs','presentation.mjs'];
-const styles=['styles.css','ui-controls.css','experiences.css','presentation.css'];
+const styles=['styles.css','ui-controls.css','experiences.css','presentation.css','design.css'];
 for(const file of ['index.html',...styles,...modules,'data/land-mask.json','data/history.json','data/history-sources.md','data/README.md','favicon.svg','vendor'])await cp(file,`dist/${file}`,{recursive:true});
 const hash=createHash('sha256');
 for(const file of [...modules,...styles,'index.html','data/land-mask.json','data/history.json','vendor/polygon-clipping.mjs'])hash.update(await readText(file));

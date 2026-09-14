@@ -133,18 +133,18 @@ function wrappedText(context,text,x,y,maxWidth,lineHeight,maxLines=3){
 /** A standalone report card; no web map pixels or live imagery are exported. */
 export async function previewPresentationPng(input,doc=document){
  const s=normalizePresentationSnapshot(input);
- if(doc.fonts){await doc.fonts.ready;await doc.fonts.load('600 30px "Noto Sans KR"');}
+ if(doc.fonts){await doc.fonts.ready;await doc.fonts.load('600 30px "SUIT"');}
  const canvas=doc.createElement('canvas');canvas.width=1600;canvas.height=1000;
  const c=canvas.getContext('2d');if(!c)throw Error('Canvas unavailable');
- c.fillStyle='#080c15';c.fillRect(0,0,1600,1000);
- const glow=c.createRadialGradient(1250,0,20,1250,0,720);glow.addColorStop(0,'#1e3d85');glow.addColorStop(1,'#080c15');c.fillStyle=glow;c.fillRect(0,0,1600,1000);
- const font=(size,weight=400)=>{c.font=`${weight} ${size}px "Noto Sans KR", sans-serif`;};
- font(23,600);c.fillStyle='#99b8ff';c.fillText('LAND:15  /  RESTORATION STORY',76,78);
+ c.fillStyle='#142124';c.fillRect(0,0,1600,1000);
+ const glow=c.createRadialGradient(1250,0,20,1250,0,720);glow.addColorStop(0,'#285743');glow.addColorStop(1,'#142124');c.fillStyle=glow;c.fillRect(0,0,1600,1000);
+ const font=(size,weight=400)=>{c.font=`${weight} ${size}px "SUIT", sans-serif`;};
+ font(23,600);c.fillStyle='#a7e7d8';c.fillText('LAND:15  /  RESTORATION STORY',76,78);
  font(48,600);c.fillStyle='#f0f5ff';wrappedText(c,s.regionName,76,152,1430,60,1);
  font(23);c.fillStyle='#adc0df';c.fillText(`발표 시작 시점의 분석 요약 · 고위험 기준 ${fmt(s.threshold)}점`,78,205);
  const metrics=[['분석 육지',`${fmt(s.landArea)} km²`],['모의 고위험 면적',s.hasLand?`${fmt(s.riskArea)} km²`:'수역 · 분석 제외'],['모의 고위험 비율',s.hasLand?`${fmt(s.riskPercent)}%`:'해당 없음']];
  metrics.forEach(([label,value],i)=>{const x=76+i*490;c.fillStyle='#152038';c.fillRect(x,255,466,170);font(22);c.fillStyle='#a7b9d7';c.fillText(label,x+26,297);font(36,600);c.fillStyle='#f1f5ff';wrappedText(c,value,x+26,366,415,40,1);});
- c.fillStyle='#668eff';c.fillRect(76,470,5,310);font(29,600);c.fillStyle='#e4edff';c.fillText('복원 시나리오',103,505);
+ c.fillStyle='#75d4bf';c.fillRect(76,470,5,310);font(29,600);c.fillStyle='#e4f2ea';c.fillText('복원 시나리오',103,505);
  font(23);c.fillStyle='#bed0ef';c.fillText(`선정 후보 ${s.selectedCount}곳    ·    가상 배정액 ${fmt(s.spent)} / ${fmt(s.budget)}억 원`,103,555);
  c.fillText(`선정 셀의 위험점수 ${fmt(s.reductionPercent)}% 감소 가정`,103,603);
  font(23);c.fillStyle='#a1b7da';c.fillText('전체 분석 육지의 면적가중 평균 위험점수',103,660);

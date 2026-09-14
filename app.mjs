@@ -13,7 +13,7 @@ let analysis,plan,map,route=[],networkEdges=[],timer,tourFrame,loadingTimer,view
 let analysisWorker=null,workerUnavailable=false,workerSequence=0;
 const workerJobs=new Map();
 let resultPage=0;
-let historyView,presentation,storySaved=null,storyCell=null;
+let historyView,presentation,storySaved=null,storyCell=null,inspectionReturnTarget=null;
 function setPane(pane){
  $('#inspector-heading').textContent={explore:'지역 탐색',analysis:'위험 분석',restore:'복원 시나리오',layers:'지도 설정'}[pane];
  $('.workspace').classList.remove('panel-collapsed');
@@ -22,7 +22,8 @@ function setPane(pane){
  $$('[data-pane-panel]').forEach(panel=>{const active=panel.dataset.panePanel===pane;panel.classList.toggle('active',active);panel.hidden=!active;});
  closeInspection();
 }
-function closeInspection(){state.selected=null;$('#inspect-panel').hidden=true;if(state.ready)setData('selected',featureCollection());}
+function closeInspection({restoreFocus=false}={}){state.selected=null;$('#inspect-panel').hidden=true;if(state.ready)setData('selected',featureCollection());if(restoreFocus)(inspectionReturnTarget?.isConnected?inspectionReturnTarget:$('.pane-tabs .active'))?.focus();inspectionReturnTarget=null;}
+function openCell(index){inspectionReturnTarget=document.activeElement;inspectCell(index);if(!$('#inspect-panel').hidden)$('#inspect-close').focus({preventScroll:true});}
 function collapsePanel(){closeInspection();$('.workspace').classList.add('panel-collapsed');$('#panel-toggle').setAttribute('aria-expanded','false');}
 const zoneColors=['#87b995','#b4ad79','#a195bd','#769bab','#b58d78','#9aa667'];
 function recompute(){viewport?.invalidate();analysis=analyze(state.bounds,state);networkEdges=managementNetwork(analysis.centers.filter(c=>c.visible));plan=greedyPlan(analysis.cells,state.budget,state.threshold);route=routeToTarget(analysis,plan.selected[0]);if(state.ready)renderLayers();renderSummary();renderResults();if(state.selected!==null)inspectCell(state.selected);viewport?.refresh();}
@@ -73,7 +74,7 @@ function renderResults(){
   html=`<div class="metric-grid"><div class="metric-tile"><span>육지 연결망</span><b>${format.format(total)}</b><small>km · ${networkEdges.length}개 연결</small></div><div class="metric-tile"><span>1순위 접근</span><b>${route.length?length.toFixed(1):'—'}</b><small>km · 모의 경로</small></div></div><p class="micro">${route.length?'실제 도로·경사·통행 조건은 반영하지 않습니다.':'연결할 거점·후보가 없거나 수역에 막혀 경로가 없습니다.'}</p>`;
  }
  $('#result-content').innerHTML=html;
- $$('[data-cell]').forEach(b=>b.addEventListener('click',()=>inspectCell(Number(b.dataset.cell))));
+ $$('[data-cell]').forEach(b=>b.addEventListener('click',()=>openCell(Number(b.dataset.cell))));
  $('#plan-prev')?.addEventListener('click',()=>{resultPage--;renderResults();$('#plan-prev')?.focus();});
  $('#plan-next')?.addEventListener('click',()=>{resultPage++;renderResults();$('#plan-next')?.focus();});
 }
@@ -210,10 +211,12 @@ function bindControls(){
  $('#effect').addEventListener('input',e=>{state.effect=Number(e.target.value);syncControls();applyScenario(state.after);});$('#before-btn').addEventListener('click',()=>applyScenario(false));$('#after-btn').addEventListener('click',()=>applyScenario(true));
  $('#opacity').addEventListener('input',e=>{const value=Number(e.target.value);$('#opacity-value').textContent=`${value}%`;if(state.ready)map.setPaintProperty('risk','fill-opacity',value/100);});
  $('#plan-btn').addEventListener('click',()=>setStep('plan'));
- $('#explain-btn').addEventListener('click',()=>{const highest=highestRiskCell();if(!highest)return toast('분석할 육지가 없습니다. 육지로 이동해 주세요.');setCellTab('explanation');inspectCell(highest.index);});
+ $('#explain-btn').addEventListener('click',()=>{const highest=highestRiskCell();if(!highest)return toast('분석할 육지가 없습니다. 육지로 이동해 주세요.');setCellTab('explanation');openCell(highest.index);});
  $$('[data-cell-tab]').forEach(button=>button.addEventListener('click',()=>setCellTab(button.dataset.cellTab)));
  for(const id of ['about-btn','sources-btn','method-btn'])$('#'+id).addEventListener('click',showDialog);$('#about-close').addEventListener('click',()=>$('#about-dialog').close());$('#about-dialog').addEventListener('click',e=>{if(e.target===$('#about-dialog')){const b=e.target.getBoundingClientRect();if(e.clientX<b.left||e.clientX>b.right||e.clientY<b.top||e.clientY>b.bottom)e.target.close();}});
- $('#inspect-close').addEventListener('click',closeInspection);
+ $('#inspect-close').addEventListener('click',()=>closeInspection({restoreFocus:true}));
+ $('#inspect-panel').addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();closeInspection({restoreFocus:true});}});
+ $('#about-dialog').setAttribute('aria-label','LAND:15 이용 안내');
  $('#view-3d').addEventListener('click',()=>setView(true));$('#view-2d').addEventListener('click',()=>setView(false));$('#tour-btn').addEventListener('click',toggleTour);$('#north-btn').addEventListener('click',()=>{stopTour();map?.easeTo({bearing:0,duration:reduced.matches?0:500});});$('#home-btn').addEventListener('click',()=>setRegionCamera());$('#zoom-in').addEventListener('click',()=>{stopTour();map?.zoomIn({duration:reduced.matches?0:300});});$('#zoom-out').addEventListener('click',()=>{stopTour();map?.zoomOut({duration:reduced.matches?0:300});});
  $('#fullscreen-btn').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if($('.workspace').requestFullscreen)await $('.workspace').requestFullscreen();else return toast('이 브라우저는 전체 화면을 지원하지 않습니다.');map?.resize();}catch{toast('전체 화면 전환을 사용할 수 없습니다.');}});document.addEventListener('fullscreenchange',()=>map?.resize());
  $('#draw-btn').addEventListener('click',()=>{if(!state.ready)return toast('지도를 불러온 뒤 구역을 지정해주세요.');if(state.drawing)return cancelDrawing();stopTour();viewport?.invalidate();state.drawing=true;state.points=[];$('#draw-btn').textContent='지정 취소 · Esc';$('#draw-btn').classList.add('active');map.getCanvas().style.cursor='crosshair';$('#map-status').hidden=false;$('#map-status').textContent='분석할 사각 구역의 첫 번째 모서리를 선택해주세요.';});
