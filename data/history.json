@@ -1,0 +1,2170 @@
+{
+  "schemaVersion": 1,
+  "retrievedAt": "2026-09-14T06:51:48.991Z",
+  "years": [
+    2001,
+    2010,
+    2020,
+    2025
+  ],
+  "imagery": {
+    "ndvi": {
+      "layer": "MODIS_Terra_L3_NDVI_Monthly",
+      "matrixSet": "GoogleMapsCompatible_Level7",
+      "tileSize": 256,
+      "maxzoom": 7,
+      "availability": [
+        "2000-03-01/2025-03-01/P1M",
+        "2025-05-01/2026-07-01/P1M"
+      ],
+      "label": "8월 식생지수 · 월 합성",
+      "dateByYear": {
+        "2001": "2001-08-01",
+        "2010": "2010-08-01",
+        "2020": "2020-08-01",
+        "2025": "2025-08-01"
+      },
+      "tileUrlTemplate": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_Monthly/default/{date}/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png",
+      "legendUrl": "https://gibs.earthdata.nasa.gov/legends/MODIS_L3_NDVI_H.svg",
+      "colorMapUrl": "https://gibs.earthdata.nasa.gov/colormaps/v1.3/MODIS_L3_NDVI.xml",
+      "legendStops": [
+        {
+          "value": 0.01,
+          "color": "#f1eced"
+        },
+        {
+          "value": 0.1,
+          "color": "#dfcec2"
+        },
+        {
+          "value": 0.2,
+          "color": "#b09b8a"
+        },
+        {
+          "value": 0.3,
+          "color": "#965a47"
+        },
+        {
+          "value": 0.4,
+          "color": "#8fb716"
+        },
+        {
+          "value": 0.6,
+          "color": "#3e8a01"
+        },
+        {
+          "value": 0.8,
+          "color": "#086701"
+        },
+        {
+          "value": 1,
+          "color": "#001801"
+        }
+      ],
+      "sourceUrl": "https://nasa-gibs.github.io/gibs-api-docs/access-basics/",
+      "attribution": "NASA EOSDIS GIBS · MODIS Terra",
+      "noDataNote": "수역·0 이하 NDVI·결측은 투명합니다. 이 지도는 사막화 판정도가 아닌 월 식생지수 영상입니다."
+    },
+    "trueColor": {
+      "layer": "MODIS_Terra_CorrectedReflectance_TrueColor",
+      "matrixSet": "GoogleMapsCompatible_Level9",
+      "tileSize": 256,
+      "maxzoom": 9,
+      "availability": [
+        "2000-02-24/2000-04-25/P1D",
+        "2000-04-28/2000-08-06/P1D",
+        "2000-08-18/2001-06-15/P1D",
+        "2001-07-03/2002-03-19/P1D",
+        "2002-03-28/2003-12-16/P1D",
+        "2003-12-24/2008-12-20/P1D",
+        "2008-12-23/2016-02-18/P1D",
+        "2016-02-27/2022-10-10/P1D",
+        "2022-10-23/2025-08-08/P1D",
+        "2025-08-10/2025-11-08/P1D",
+        "2025-11-10/2026-09-14/P1D"
+      ],
+      "label": "8월 13일 실제 위성영상",
+      "dateByYear": {
+        "2001": "2001-08-13",
+        "2010": "2010-08-13",
+        "2020": "2020-08-13",
+        "2025": "2025-08-13"
+      },
+      "tileUrlTemplate": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/{date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpeg",
+      "sourceUrl": "https://nasa-gibs.github.io/gibs-api-docs/access-basics/",
+      "attribution": "NASA EOSDIS GIBS · MODIS Terra",
+      "noDataNote": "일별 위성사진에는 구름이나 관측 공백이 있을 수 있습니다."
+    }
+  },
+  "regions": {
+    "gobi": {
+      "name": "고비 전이지대",
+      "coordinate": [
+        104.85,
+        45
+      ],
+      "scope": "지역 중심 대표점 · 지역 전체 평균 아님",
+      "series": [
+        {
+          "year": 2001,
+          "precipitationMm": 106.29,
+          "ndvi": 0.0933,
+          "ndviDate": "2001-08-13",
+          "ndviRaw": 933,
+          "ndviQuality": 0,
+          "ndviUrl": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=45&longitude=104.85&startDate=A2001225&endDate=A2001225&kmAboveBelow=0&kmLeftRight=0",
+          "ndviPixel": {
+            "cellSizeM": 231.656358264,
+            "xllcorner": 8243954.77,
+            "yllcorner": 5003545.72,
+            "projection": "MODIS Sinusoidal",
+            "qualityBits": 2116,
+            "landWaterFlag": 1
+          }
+        },
+        {
+          "year": 2010,
+          "precipitationMm": 105.1,
+          "ndvi": 0.0883,
+          "ndviDate": "2010-08-13",
+          "ndviRaw": 883,
+          "ndviQuality": 0,
+          "ndviUrl": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=45&longitude=104.85&startDate=A2010225&endDate=A2010225&kmAboveBelow=0&kmLeftRight=0",
+          "ndviPixel": {
+            "cellSizeM": 231.656358264,
+            "xllcorner": 8243954.77,
+            "yllcorner": 5003545.72,
+            "projection": "MODIS Sinusoidal",
+            "qualityBits": 2116,
+            "landWaterFlag": 1
+          }
+        },
+        {
+          "year": 2020,
+          "precipitationMm": 67.46,
+          "ndvi": 0.088,
+          "ndviDate": "2020-08-12",
+          "ndviRaw": 880,
+          "ndviQuality": 0,
+          "ndviUrl": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=45&longitude=104.85&startDate=A2020225&endDate=A2020225&kmAboveBelow=0&kmLeftRight=0",
+          "ndviPixel": {
+            "cellSizeM": 231.656358264,
+            "xllcorner": 8243954.77,
+            "yllcorner": 5003545.72,
+            "projection": "MODIS Sinusoidal",
+            "qualityBits": 2116,
+            "landWaterFlag": 1
+          }
+        },
+        {
+          "year": 2025,
+          "precipitationMm": 133.17,
+          "ndvi": 0.1197,
+          "ndviDate": "2025-08-13",
+          "ndviRaw": 1197,
+          "ndviQuality": 0,
+          "ndviUrl": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=45&longitude=104.85&startDate=A2025225&endDate=A2025225&kmAboveBelow=0&kmLeftRight=0",
+          "ndviPixel": {
+            "cellSizeM": 231.656358264,
+            "xllcorner": 8243954.77,
+            "yllcorner": 5003545.72,
+            "projection": "MODIS Sinusoidal",
+            "qualityBits": 2116,
+            "landWaterFlag": 1
+          }
+        }
+      ],
+      "precipitationSeries": [
+        {
+          "year": 2001,
+          "precipitationMm": 106.29,
+          "monthlyMeanMmPerDay": [
+            0.02,
+            0.02,
+            0.05,
+            0.02,
+            0.12,
+            0.97,
+            1.11,
+            0.52,
+            0.19,
+            0.34,
+            0.04,
+            0.07
+          ]
+        },
+        {
+          "year": 2002,
+          "precipitationMm": 77.27,
+          "monthlyMeanMmPerDay": [
+            0.15,
+            0.01,
+            0.1,
+            0.49,
+            0.4,
+            0.33,
+            0.21,
+            0.16,
+            0.2,
+            0.15,
+            0.11,
+            0.22
+          ]
+        },
+        {
+          "year": 2003,
+          "precipitationMm": 189.61,
+          "monthlyMeanMmPerDay": [
+            0.07,
+            0.08,
+            0.03,
+            0.3,
+            1.44,
+            0.74,
+            1.53,
+            1.48,
+            0.23,
+            0.11,
+            0.15,
+            0.01
+          ]
+        },
+        {
+          "year": 2004,
+          "precipitationMm": 95.42,
+          "monthlyMeanMmPerDay": [
+            0.02,
+            0.08,
+            0.11,
+            0.02,
+            0.21,
+            1.12,
+            0.63,
+            0.56,
+            0.3,
+            0.01,
+            0.01,
+            0.06
+          ]
+        },
+        {
+          "year": 2005,
+          "precipitationMm": 71.78,
+          "monthlyMeanMmPerDay": [
+            0.03,
+            0.27,
+            0.01,
+            0.02,
+            0.39,
+            0.09,
+            0.67,
+            0.61,
+            0.12,
+            0.1,
+            0.03,
+            0.01
+          ]
+        },
+        {
+          "year": 2006,
+          "precipitationMm": 97.87,
+          "monthlyMeanMmPerDay": [
+            0.01,
+            0.03,
+            0.03,
+            0.06,
+            0.06,
+            0.39,
+            2.3,
+            0.08,
+            0.1,
+            0.02,
+            0.07,
+            0.03
+          ]
+        },
+        {
+          "year": 2007,
+          "precipitationMm": 120.23,
+          "monthlyMeanMmPerDay": [
+            0.06,
+            0.15,
+            0.16,
+            0.07,
+            0.23,
+            0.1,
+            0.59,
+            2.29,
+            0.04,
+            0.16,
+            0.01,
+            0.04
+          ]
+        },
+        {
+          "year": 2008,
+          "precipitationMm": 128.92,
+          "monthlyMeanMmPerDay": [
+            0.07,
+            0.01,
+            0.31,
+            0.05,
+            0.1,
+            1.84,
+            0.28,
+            1.1,
+            0.29,
+            0.09,
+            0.01,
+            0.08
+          ]
+        },
+        {
+          "year": 2009,
+          "precipitationMm": 52.29,
+          "monthlyMeanMmPerDay": [
+            0,
+            0.01,
+            0.1,
+            0.11,
+            0.16,
+            0.18,
+            0.26,
+            0.52,
+            0,
+            0.22,
+            0.09,
+            0.05
+          ]
+        },
+        {
+          "year": 2010,
+          "precipitationMm": 105.1,
+          "monthlyMeanMmPerDay": [
+            0.16,
+            0.08,
+            0.07,
+            0.17,
+            0.65,
+            0.4,
+            0.55,
+            0.14,
+            0.95,
+            0.13,
+            0.09,
+            0.06
+          ]
+        },
+        {
+          "year": 2011,
+          "precipitationMm": 104.23,
+          "monthlyMeanMmPerDay": [
+            0.12,
+            0.07,
+            0.04,
+            0.04,
+            0.19,
+            1.06,
+            0.47,
+            0.73,
+            0.35,
+            0.18,
+            0.13,
+            0.04
+          ]
+        },
+        {
+          "year": 2012,
+          "precipitationMm": 168.88,
+          "monthlyMeanMmPerDay": [
+            0.01,
+            0.01,
+            0.05,
+            0.09,
+            0.12,
+            0.85,
+            2.26,
+            1.22,
+            0.56,
+            0.13,
+            0.1,
+            0.1
+          ]
+        },
+        {
+          "year": 2013,
+          "precipitationMm": 97.46,
+          "monthlyMeanMmPerDay": [
+            0.08,
+            0.05,
+            0.06,
+            0.1,
+            0.02,
+            0.73,
+            1.09,
+            0.77,
+            0.11,
+            0.12,
+            0.03,
+            0.02
+          ]
+        },
+        {
+          "year": 2014,
+          "precipitationMm": 99.29,
+          "monthlyMeanMmPerDay": [
+            0.01,
+            0.05,
+            0.06,
+            0.22,
+            0.71,
+            1.05,
+            0.38,
+            0.39,
+            0.34,
+            0.04,
+            0.01,
+            0
+          ]
+        },
+        {
+          "year": 2015,
+          "precipitationMm": 163.7,
+          "monthlyMeanMmPerDay": [
+            0.03,
+            0.01,
+            0.02,
+            0.16,
+            0.24,
+            1.33,
+            1.82,
+            0.33,
+            1.1,
+            0.13,
+            0.15,
+            0.05
+          ]
+        },
+        {
+          "year": 2016,
+          "precipitationMm": 184.81,
+          "monthlyMeanMmPerDay": [
+            0.04,
+            0.02,
+            0.09,
+            0.04,
+            0.28,
+            1.72,
+            1.79,
+            0.57,
+            0.88,
+            0.45,
+            0.06,
+            0.11
+          ]
+        },
+        {
+          "year": 2017,
+          "precipitationMm": 117.27,
+          "monthlyMeanMmPerDay": [
+            0.04,
+            0.15,
+            0.34,
+            0.05,
+            0.25,
+            0.74,
+            1.1,
+            0.87,
+            0.15,
+            0.06,
+            0.07,
+            0.01
+          ]
+        },
+        {
+          "year": 2018,
+          "precipitationMm": 206.97,
+          "monthlyMeanMmPerDay": [
+            0.12,
+            0.02,
+            0.06,
+            0.31,
+            0.14,
+            0.13,
+            2.42,
+            2.94,
+            0.53,
+            0,
+            0.01,
+            0.03
+          ]
+        },
+        {
+          "year": 2019,
+          "precipitationMm": 109.17,
+          "monthlyMeanMmPerDay": [
+            0.01,
+            0.13,
+            0.14,
+            0.33,
+            0.42,
+            0.52,
+            0.58,
+            1.01,
+            0.25,
+            0.12,
+            0.01,
+            0.05
+          ]
+        },
+        {
+          "year": 2020,
+          "precipitationMm": 67.46,
+          "monthlyMeanMmPerDay": [
+            0.02,
+            0.1,
+            0.03,
+            0.02,
+            0.19,
+            0.21,
+            0.62,
+            0.64,
+            0.2,
+            0.04,
+            0.11,
+            0.02
+          ]
+        },
+        {
+          "year": 2021,
+          "precipitationMm": 176.64,
+          "monthlyMeanMmPerDay": [
+            0.04,
+            0.05,
+            0.04,
+            0.36,
+            0.19,
+            0.59,
+            3.07,
+            0.43,
+            0.73,
+            0.14,
+            0.09,
+            0.03
+          ]
+        },
+        {
+          "year": 2022,
+          "precipitationMm": 76.33,
+          "monthlyMeanMmPerDay": [
+            0.02,
+            0.07,
+            0.05,
+            0.12,
+            0.15,
+            0.65,
+            0.55,
+            0.5,
+            0.16,
+            0.17,
+            0.03,
+            0.03
+          ]
+        },
+        {
+          "year": 2023,
+          "precipitationMm": 145.17,
+          "monthlyMeanMmPerDay": [
+            0.05,
+            0.08,
+            0.03,
+            0.06,
+            0.66,
+            0.45,
+            1.73,
+            0.77,
+            0.49,
+            0.01,
+            0.22,
+            0.18
+          ]
+        },
+        {
+          "year": 2024,
+          "precipitationMm": 262.04,
+          "monthlyMeanMmPerDay": [
+            0.11,
+            0.04,
+            0.02,
+            0.37,
+            0.41,
+            0.73,
+            1.47,
+            3.21,
+            1.77,
+            0.34,
+            0.06,
+            0.02
+          ]
+        },
+        {
+          "year": 2025,
+          "precipitationMm": 133.17,
+          "monthlyMeanMmPerDay": [
+            0.04,
+            0,
+            0.16,
+            0.26,
+            0.67,
+            0.45,
+            0.95,
+            0.96,
+            0.26,
+            0.15,
+            0.4,
+            0.04
+          ]
+        }
+      ],
+      "sources": {
+        "precipitationUrl": "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=PRECTOTCORR&community=AG&longitude=104.85&latitude=45&format=JSON&start=2001&end=2025",
+        "ndviDatesUrl": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/dates?latitude=45&longitude=104.85",
+        "powerSource": [
+          "MERRA2"
+        ],
+        "powerTimeStandard": "LST"
+      }
+    },
+    "sahel": {
+      "name": "사헬 서부",
+      "coordinate": [
+        -14.65,
+        15.5
+      ],
+      "scope": "지역 중심 대표점 · 지역 전체 평균 아님",
+      "series": [
+        {
+          "year": 2001,
+          "precipitationMm": 220.18,
+          "ndvi": 0.2907,
+          "ndviDate": "2001-08-13",
+          "ndviRaw": 2907,
+          "ndviQuality": 0,
+          "ndviUrl": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=15.5&longitude=-14.65&startDate=A2001225&endDate=A2001225&kmAboveBelow=0&kmLeftRight=0",
+          "ndviPixel": {
+            "cellSizeM": 231.656358264,
+            "xllcorner": -1569935.12,
+            "yllcorner": 1723291.69,
+            "projection": "MODIS Sinusoidal",
+            "qualityBits": 2116,
+            "landWaterFlag": 1
+          }
+        },
+        {
+          "year": 2010,
+          "precipitationMm": 735.43,
+          "ndvi": 0.3502,
+          "ndviDate": "2010-08-13",
+          "ndviRaw": 3502,
+          "ndviQuality": 0,
+          "ndviUrl": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=15.5&longitude=-14.65&startDate=A2010225&endDate=A2010225&kmAboveBelow=0&kmLeftRight=0",
+          "ndviPixel": {
+            "cellSizeM": 231.656358264,
+            "xllcorner": -1569935.12,
+            "yllcorner": 1723291.69,
+            "projection": "MODIS Sinusoidal",
+            "qualityBits": 2116,
+            "landWaterFlag": 1
+          }
+        },
+        {
+          "year": 2020,
+          "precipitationMm": 882.2,
+          "ndvi": null,
+          "ndviDate": "2020-08-12",
+          "ndviRaw": 3262,
+          "ndviQuality": 3,
+          "ndviUrl": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=15.5&longitude=-14.65&startDate=A2020225&endDate=A2020225&kmAboveBelow=0&kmLeftRight=0",
+          "ndviPixel": {
+            "cellSizeM": 231.656358264,
+            "xllcorner": -1569935.12,
+            "yllcorner": 1723291.69,
+            "projection": "MODIS Sinusoidal",
+            "qualityBits": 2122,
+            "landWaterFlag": 1
+          }
+        },
+        {
+          "year": 2025,
+          "precipitationMm": 1964.36,
+          "ndvi": null,
+          "ndviDate": "2025-08-13",
+          "ndviRaw": 2554,
+          "ndviQuality": 3,
+          "ndviUrl": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=15.5&longitude=-14.65&startDate=A2025225&endDate=A2025225&kmAboveBelow=0&kmLeftRight=0",
+          "ndviPixel": {
+            "cellSizeM": 231.656358264,
+            "xllcorner": -1569935.12,
+            "yllcorner": 1723291.69,
+            "projection": "MODIS Sinusoidal",
+            "qualityBits": 3294,
+            "landWaterFlag": 1
+          }
+        }
+      ],
+      "precipitationSeries": [
+        {
+          "year": 2001,
+          "precipitationMm": 220.18,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.11,
+            3.97,
+            1.18,
+            1.34,
+            0.53,
+            0.02,
+            0
+          ]
+        },
+        {
+          "year": 2002,
+          "precipitationMm": 206.03,
+          "monthlyMeanMmPerDay": [
+            0.66,
+            0,
+            0,
+            0,
+            0.02,
+            0.55,
+            0.37,
+            3.4,
+            1.12,
+            0.56,
+            0,
+            0.02
+          ]
+        },
+        {
+          "year": 2003,
+          "precipitationMm": 403.8,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0,
+            0.01,
+            0,
+            0.4,
+            0.95,
+            5.16,
+            5.15,
+            0.79,
+            0.77,
+            0
+          ]
+        },
+        {
+          "year": 2004,
+          "precipitationMm": 356.48,
+          "monthlyMeanMmPerDay": [
+            0.02,
+            0,
+            0.01,
+            0,
+            0,
+            0.9,
+            2.77,
+            3.11,
+            4.64,
+            0.17,
+            0.06,
+            0
+          ]
+        },
+        {
+          "year": 2005,
+          "precipitationMm": 491.6,
+          "monthlyMeanMmPerDay": [
+            0,
+            0.05,
+            0,
+            0,
+            0.04,
+            1.36,
+            4.39,
+            4.84,
+            5.06,
+            0.33,
+            0,
+            0
+          ]
+        },
+        {
+          "year": 2006,
+          "precipitationMm": 289.63,
+          "monthlyMeanMmPerDay": [
+            0.14,
+            0.11,
+            0.01,
+            0,
+            0.04,
+            0.52,
+            2.28,
+            4.35,
+            1.85,
+            0.13,
+            0,
+            0
+          ]
+        },
+        {
+          "year": 2007,
+          "precipitationMm": 514.3,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.19,
+            4.36,
+            8.79,
+            2.89,
+            0.45,
+            0.01,
+            0
+          ]
+        },
+        {
+          "year": 2008,
+          "precipitationMm": 456.38,
+          "monthlyMeanMmPerDay": [
+            0,
+            0.04,
+            0,
+            0,
+            0.13,
+            1.9,
+            3.57,
+            5.33,
+            3.23,
+            0.69,
+            0,
+            0
+          ]
+        },
+        {
+          "year": 2009,
+          "precipitationMm": 592.95,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0,
+            0,
+            0.04,
+            1.74,
+            4.3,
+            6.61,
+            6.39,
+            0.3,
+            0.01,
+            0
+          ]
+        },
+        {
+          "year": 2010,
+          "precipitationMm": 735.43,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0,
+            0,
+            0.01,
+            1.03,
+            4.94,
+            9.43,
+            7.49,
+            1.05,
+            0.05,
+            0
+          ]
+        },
+        {
+          "year": 2011,
+          "precipitationMm": 433.66,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0,
+            0,
+            0.01,
+            1.17,
+            1.8,
+            7.36,
+            2.89,
+            0.89,
+            0,
+            0
+          ]
+        },
+        {
+          "year": 2012,
+          "precipitationMm": 591.63,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0.35,
+            0.02,
+            0.48,
+            2.27,
+            5.14,
+            6.57,
+            3.75,
+            0.69,
+            0.01,
+            0
+          ]
+        },
+        {
+          "year": 2013,
+          "precipitationMm": 460.69,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.26,
+            3.44,
+            4.45,
+            6.22,
+            0.67,
+            0,
+            0.03
+          ]
+        },
+        {
+          "year": 2014,
+          "precipitationMm": 304.15,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0,
+            0,
+            0.02,
+            0.85,
+            2.07,
+            4.32,
+            2.2,
+            0.42,
+            0.01,
+            0.02
+          ]
+        },
+        {
+          "year": 2015,
+          "precipitationMm": 493.17,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.02,
+            2.08,
+            5.01,
+            7.77,
+            1.28,
+            0,
+            0
+          ]
+        },
+        {
+          "year": 2016,
+          "precipitationMm": 598.45,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0,
+            0,
+            0.03,
+            1.16,
+            6.84,
+            7.11,
+            4.25,
+            0.07,
+            0.02,
+            0
+          ]
+        },
+        {
+          "year": 2017,
+          "precipitationMm": 491.44,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0,
+            0,
+            0.01,
+            2.93,
+            2.68,
+            6.75,
+            3.49,
+            0.2,
+            0,
+            0
+          ]
+        },
+        {
+          "year": 2018,
+          "precipitationMm": 517.91,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            1.44,
+            5.38,
+            4.02,
+            5.45,
+            0.61,
+            0.03,
+            0
+          ]
+        },
+        {
+          "year": 2019,
+          "precipitationMm": 469.88,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0,
+            0.01,
+            0,
+            0.02,
+            1.98,
+            7.38,
+            4.39,
+            1.52,
+            0,
+            0
+          ]
+        },
+        {
+          "year": 2020,
+          "precipitationMm": 882.2,
+          "monthlyMeanMmPerDay": [
+            0,
+            0.34,
+            0,
+            0.18,
+            0.01,
+            0.48,
+            8.77,
+            7.27,
+            10.5,
+            1.29,
+            0,
+            0
+          ]
+        },
+        {
+          "year": 2021,
+          "precipitationMm": 833.94,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            1.92,
+            3.62,
+            16.6,
+            4.51,
+            0.42,
+            0.04,
+            0
+          ]
+        },
+        {
+          "year": 2022,
+          "precipitationMm": 764.29,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0,
+            0,
+            0.24,
+            2.02,
+            7.68,
+            5.31,
+            8.07,
+            1.37,
+            0,
+            0.29
+          ]
+        },
+        {
+          "year": 2023,
+          "precipitationMm": 588.19,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0,
+            0,
+            0.01,
+            0.77,
+            5.52,
+            6.96,
+            4.69,
+            1.2,
+            0,
+            0
+          ]
+        },
+        {
+          "year": 2024,
+          "precipitationMm": 603.32,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0.3,
+            5.76,
+            5.45,
+            7.08,
+            1,
+            0,
+            0.11
+          ]
+        },
+        {
+          "year": 2025,
+          "precipitationMm": 1964.36,
+          "monthlyMeanMmPerDay": [
+            0,
+            0,
+            0.45,
+            0,
+            0.23,
+            24.98,
+            21.91,
+            10.56,
+            4.57,
+            1.6,
+            0.01,
+            0.01
+          ]
+        }
+      ],
+      "sources": {
+        "precipitationUrl": "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=PRECTOTCORR&community=AG&longitude=-14.65&latitude=15.5&format=JSON&start=2001&end=2025",
+        "ndviDatesUrl": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/dates?latitude=15.5&longitude=-14.65",
+        "powerSource": [
+          "MERRA2"
+        ],
+        "powerTimeStandard": "LST"
+      }
+    },
+    "aral": {
+      "name": "아랄해 동부",
+      "coordinate": [
+        62.5,
+        44.65
+      ],
+      "scope": "지역 중심 대표점 · 지역 전체 평균 아님",
+      "series": [
+        {
+          "year": 2001,
+          "precipitationMm": 72.15,
+          "ndvi": 0.1016,
+          "ndviDate": "2001-08-13",
+          "ndviRaw": 1016,
+          "ndviQuality": 0,
+          "ndviUrl": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=44.65&longitude=62.5&startDate=A2001225&endDate=A2001225&kmAboveBelow=0&kmLeftRight=0",
+          "ndviPixel": {
+            "cellSizeM": 231.656358264,
+            "xllcorner": 4944009.94,
+            "yllcorner": 4964627.45,
+            "projection": "MODIS Sinusoidal",
+            "qualityBits": 2116,
+            "landWaterFlag": 1
+          }
+        },
+        {
+          "year": 2010,
+          "precipitationMm": 73.51,
+          "ndvi": 0.1177,
+          "ndviDate": "2010-08-13",
+          "ndviRaw": 1177,
+          "ndviQuality": 0,
+          "ndviUrl": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=44.65&longitude=62.5&startDate=A2010225&endDate=A2010225&kmAboveBelow=0&kmLeftRight=0",
+          "ndviPixel": {
+            "cellSizeM": 231.656358264,
+            "xllcorner": 4944009.94,
+            "yllcorner": 4964627.45,
+            "projection": "MODIS Sinusoidal",
+            "qualityBits": 2116,
+            "landWaterFlag": 1
+          }
+        },
+        {
+          "year": 2020,
+          "precipitationMm": 79.21,
+          "ndvi": 0.1375,
+          "ndviDate": "2020-08-12",
+          "ndviRaw": 1375,
+          "ndviQuality": 0,
+          "ndviUrl": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=44.65&longitude=62.5&startDate=A2020225&endDate=A2020225&kmAboveBelow=0&kmLeftRight=0",
+          "ndviPixel": {
+            "cellSizeM": 231.656358264,
+            "xllcorner": 4944009.94,
+            "yllcorner": 4964627.45,
+            "projection": "MODIS Sinusoidal",
+            "qualityBits": 2116,
+            "landWaterFlag": 1
+          }
+        },
+        {
+          "year": 2025,
+          "precipitationMm": 118,
+          "ndvi": 0.1252,
+          "ndviDate": "2025-08-13",
+          "ndviRaw": 1252,
+          "ndviQuality": 0,
+          "ndviUrl": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=44.65&longitude=62.5&startDate=A2025225&endDate=A2025225&kmAboveBelow=0&kmLeftRight=0",
+          "ndviPixel": {
+            "cellSizeM": 231.656358264,
+            "xllcorner": 4944009.94,
+            "yllcorner": 4964627.45,
+            "projection": "MODIS Sinusoidal",
+            "qualityBits": 2116,
+            "landWaterFlag": 1
+          }
+        }
+      ],
+      "precipitationSeries": [
+        {
+          "year": 2001,
+          "precipitationMm": 72.15,
+          "monthlyMeanMmPerDay": [
+            0.29,
+            0.14,
+            0.28,
+            0.2,
+            0.09,
+            0.06,
+            0.07,
+            0.15,
+            0,
+            0.53,
+            0.33,
+            0.22
+          ]
+        },
+        {
+          "year": 2002,
+          "precipitationMm": 108.24,
+          "monthlyMeanMmPerDay": [
+            0.33,
+            0.77,
+            0.43,
+            0.82,
+            0.17,
+            0.78,
+            0.05,
+            0.02,
+            0.01,
+            0.03,
+            0.06,
+            0.15
+          ]
+        },
+        {
+          "year": 2003,
+          "precipitationMm": 141.64,
+          "monthlyMeanMmPerDay": [
+            0.1,
+            0.54,
+            0.73,
+            0.28,
+            0.72,
+            0.52,
+            0.13,
+            0.01,
+            0.01,
+            0.36,
+            1.01,
+            0.27
+          ]
+        },
+        {
+          "year": 2004,
+          "precipitationMm": 131.06,
+          "monthlyMeanMmPerDay": [
+            0.21,
+            0.6,
+            0.16,
+            1.11,
+            0.57,
+            0.04,
+            0.64,
+            0.1,
+            0.01,
+            0.31,
+            0.19,
+            0.37
+          ]
+        },
+        {
+          "year": 2005,
+          "precipitationMm": 83.58,
+          "monthlyMeanMmPerDay": [
+            0.48,
+            0.14,
+            0.2,
+            0.21,
+            0.46,
+            0.18,
+            0.03,
+            0.35,
+            0.01,
+            0.02,
+            0.23,
+            0.42
+          ]
+        },
+        {
+          "year": 2006,
+          "precipitationMm": 79.65,
+          "monthlyMeanMmPerDay": [
+            0.21,
+            0.3,
+            0.28,
+            0.36,
+            0.08,
+            0.17,
+            0.15,
+            0,
+            0.05,
+            0.19,
+            0.71,
+            0.14
+          ]
+        },
+        {
+          "year": 2007,
+          "precipitationMm": 90.05,
+          "monthlyMeanMmPerDay": [
+            0.14,
+            0.45,
+            0.52,
+            0.71,
+            0.09,
+            0.09,
+            0.12,
+            0.01,
+            0.03,
+            0.05,
+            0.46,
+            0.32
+          ]
+        },
+        {
+          "year": 2008,
+          "precipitationMm": 73.2,
+          "monthlyMeanMmPerDay": [
+            0.14,
+            0.29,
+            0.12,
+            0.11,
+            0.22,
+            0.05,
+            0.08,
+            0,
+            0.08,
+            0.79,
+            0.07,
+            0.44
+          ]
+        },
+        {
+          "year": 2009,
+          "precipitationMm": 94.33,
+          "monthlyMeanMmPerDay": [
+            0.24,
+            0.11,
+            0.3,
+            0.36,
+            0.38,
+            0.14,
+            0.07,
+            0.25,
+            0.22,
+            0.12,
+            0.72,
+            0.19
+          ]
+        },
+        {
+          "year": 2010,
+          "precipitationMm": 73.51,
+          "monthlyMeanMmPerDay": [
+            0.62,
+            0.41,
+            0.38,
+            0.45,
+            0.17,
+            0.02,
+            0.05,
+            0.04,
+            0,
+            0.13,
+            0.12,
+            0.04
+          ]
+        },
+        {
+          "year": 2011,
+          "precipitationMm": 75.01,
+          "monthlyMeanMmPerDay": [
+            0.11,
+            0.51,
+            0.34,
+            0.19,
+            0.21,
+            0.11,
+            0.09,
+            0.24,
+            0.04,
+            0.06,
+            0.31,
+            0.28
+          ]
+        },
+        {
+          "year": 2012,
+          "precipitationMm": 85.09,
+          "monthlyMeanMmPerDay": [
+            0.16,
+            0.02,
+            0.92,
+            0.14,
+            0.09,
+            0.28,
+            0.57,
+            0.01,
+            0,
+            0.07,
+            0.32,
+            0.19
+          ]
+        },
+        {
+          "year": 2013,
+          "precipitationMm": 116.36,
+          "monthlyMeanMmPerDay": [
+            0.62,
+            0.27,
+            0.23,
+            0.74,
+            0.15,
+            0.3,
+            0.13,
+            0.27,
+            0.02,
+            0.12,
+            0.19,
+            0.78
+          ]
+        },
+        {
+          "year": 2014,
+          "precipitationMm": 60.35,
+          "monthlyMeanMmPerDay": [
+            0.17,
+            0.09,
+            0.09,
+            0.16,
+            0.18,
+            0.07,
+            0,
+            0,
+            0.11,
+            0.48,
+            0.42,
+            0.21
+          ]
+        },
+        {
+          "year": 2015,
+          "precipitationMm": 163.74,
+          "monthlyMeanMmPerDay": [
+            0.34,
+            0.44,
+            0.5,
+            0.76,
+            1.14,
+            0.22,
+            0.01,
+            0.01,
+            0.04,
+            0.3,
+            0.7,
+            0.92
+          ]
+        },
+        {
+          "year": 2016,
+          "precipitationMm": 174.91,
+          "monthlyMeanMmPerDay": [
+            0.55,
+            0.06,
+            0.68,
+            0.39,
+            1.02,
+            0.81,
+            0.14,
+            0,
+            0.55,
+            0.09,
+            0.85,
+            0.59
+          ]
+        },
+        {
+          "year": 2017,
+          "precipitationMm": 129.73,
+          "monthlyMeanMmPerDay": [
+            0.42,
+            0.11,
+            0.53,
+            0.66,
+            0.44,
+            0.23,
+            0.11,
+            0.1,
+            0,
+            0.66,
+            0.49,
+            0.49
+          ]
+        },
+        {
+          "year": 2018,
+          "precipitationMm": 92.94,
+          "monthlyMeanMmPerDay": [
+            0.2,
+            0.96,
+            0.72,
+            0.4,
+            0.04,
+            0.01,
+            0.01,
+            0.07,
+            0.06,
+            0.16,
+            0.12,
+            0.36
+          ]
+        },
+        {
+          "year": 2019,
+          "precipitationMm": 90.78,
+          "monthlyMeanMmPerDay": [
+            0.15,
+            0.29,
+            1.17,
+            0.15,
+            0.22,
+            0.14,
+            0.14,
+            0.02,
+            0.04,
+            0.06,
+            0.09,
+            0.5
+          ]
+        },
+        {
+          "year": 2020,
+          "precipitationMm": 79.21,
+          "monthlyMeanMmPerDay": [
+            0.3,
+            0.46,
+            0.13,
+            0.91,
+            0.52,
+            0,
+            0.08,
+            0.01,
+            0.03,
+            0,
+            0.15,
+            0.03
+          ]
+        },
+        {
+          "year": 2021,
+          "precipitationMm": 792.31,
+          "monthlyMeanMmPerDay": [
+            7.13,
+            4.75,
+            8.54,
+            4.48,
+            0.53,
+            0.01,
+            0.04,
+            0,
+            0.02,
+            0.01,
+            0.2,
+            0.46
+          ]
+        },
+        {
+          "year": 2022,
+          "precipitationMm": 75.08,
+          "monthlyMeanMmPerDay": [
+            0.25,
+            0.22,
+            0.33,
+            0.31,
+            0.45,
+            0.02,
+            0.25,
+            0,
+            0.04,
+            0.06,
+            0.46,
+            0.08
+          ]
+        },
+        {
+          "year": 2023,
+          "precipitationMm": 82.37,
+          "monthlyMeanMmPerDay": [
+            0.3,
+            0.35,
+            0.18,
+            0.28,
+            0.32,
+            0.05,
+            0.04,
+            0.09,
+            0.02,
+            0.5,
+            0.24,
+            0.34
+          ]
+        },
+        {
+          "year": 2024,
+          "precipitationMm": 93.05,
+          "monthlyMeanMmPerDay": [
+            0.35,
+            0.12,
+            0.58,
+            0.16,
+            0.8,
+            0.04,
+            0.12,
+            0.03,
+            0.1,
+            0.28,
+            0.34,
+            0.11
+          ]
+        },
+        {
+          "year": 2025,
+          "precipitationMm": 118,
+          "monthlyMeanMmPerDay": [
+            0.26,
+            0.49,
+            2.05,
+            0.21,
+            0.07,
+            0.13,
+            0.02,
+            0.04,
+            0.09,
+            0.03,
+            0.07,
+            0.41
+          ]
+        }
+      ],
+      "sources": {
+        "precipitationUrl": "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=PRECTOTCORR&community=AG&longitude=62.5&latitude=44.65&format=JSON&start=2001&end=2025",
+        "ndviDatesUrl": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/dates?latitude=44.65&longitude=62.5",
+        "powerSource": [
+          "MERRA2"
+        ],
+        "powerTimeStandard": "LST"
+      }
+    }
+  },
+  "methodology": {
+    "precipitation": "NASA POWER / MERRA-2 PRECTOTCORR. Sum monthly mean daily precipitation (mm/day) multiplied by days in each month; an approximate annual total from rounded monthly API values.",
+    "precipitationKo": "NASA POWER / MERRA-2 월평균 일강수량(mm/day)에 해당 월의 일수를 곱한 뒤 12개월 합산합니다. API 월값의 반올림으로 연합계는 근사값입니다.",
+    "ndvi": "ORNL DAAC MOD13Q1 Collection 6.1, day-of-year 225 sixteen-day composite, one nominal 250 m pixel at each region center. Raw × 0.0001. Good reliability (0), good MODLAND QA (bits 0–1 = 0), land flag (bits 11–13 = 1), valid range only; otherwise null.",
+    "ndviKo": "지역 중심의 250m급 MODIS 대표 픽셀, 매년 연중 225일(8월12일 또는13일)부터 16일 합성입니다. 품질 양호·육지 픽셀만 사용하며 지도에 보이는 8월 월합성과 집계기간이 다릅니다.",
+    "caution": "식생지수의 증감이나 한 해의 강수량 차이만으로 사막화를 확정할 수 없습니다. 기존 위험도·복원 효과는 별도의 교육용 모형입니다."
+  },
+  "sources": {
+    "gibs": "https://nasa-gibs.github.io/gibs-api-docs/access-basics/",
+    "power": "https://power.larc.nasa.gov/docs/services/api/temporal/monthly/",
+    "modis": "https://modis.ornl.gov/data/modis_webservice.html",
+    "ndvi": "https://doi.org/10.5067/MODIS/MOD13Q1.061"
+  },
+  "verification": {
+    "capabilitiesUrl": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/1.0.0/WMTSCapabilities.xml",
+    "collectionFileIdentifier": "MOD13Q1.A2001225.h25v04.061.2020064130537.250m_16_days_blue_reflectance",
+    "tileChecks": [
+      {
+        "region": "gobi",
+        "year": 2001,
+        "kind": "ndvi",
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_Monthly/default/2001-08-01/GoogleMapsCompatible_Level7/7/46/101.png",
+        "bytes": 24680,
+        "sha256": "48733ee5e299993419731128b0b57800e5e91a808e372e4450f4dc7ba12b42df",
+        "width": 256,
+        "height": 256,
+        "visiblePixels": 65536,
+        "uniqueVisibleColors": 67
+      },
+      {
+        "region": "gobi",
+        "year": 2001,
+        "kind": "trueColor",
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2001-08-13/GoogleMapsCompatible_Level9/7/46/101.jpeg",
+        "bytes": 11726,
+        "sha256": "000574e6c0e7da2160f0be4fd8a18149f08355d7e69a058ab81cabffbd732bf8",
+        "jpegSignature": true
+      },
+      {
+        "region": "gobi",
+        "year": 2010,
+        "kind": "ndvi",
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_Monthly/default/2010-08-01/GoogleMapsCompatible_Level7/7/46/101.png",
+        "bytes": 24899,
+        "sha256": "2ec71877cab7e9d5503e6350dcfad17e1f46e042dea66ec9883317a72c603845",
+        "width": 256,
+        "height": 256,
+        "visiblePixels": 65536,
+        "uniqueVisibleColors": 66
+      },
+      {
+        "region": "gobi",
+        "year": 2010,
+        "kind": "trueColor",
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2010-08-13/GoogleMapsCompatible_Level9/7/46/101.jpeg",
+        "bytes": 15537,
+        "sha256": "e95d5a2f71f7b65cac283942e557afdb77548df05f9cac26196b77be06dfa97f",
+        "jpegSignature": true
+      },
+      {
+        "region": "gobi",
+        "year": 2020,
+        "kind": "ndvi",
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_Monthly/default/2020-08-01/GoogleMapsCompatible_Level7/7/46/101.png",
+        "bytes": 27414,
+        "sha256": "b16e5376a8928ad6f2b44d228e2f306d327e503c4c0b22ce397687298428595b",
+        "width": 256,
+        "height": 256,
+        "visiblePixels": 65534,
+        "uniqueVisibleColors": 66
+      },
+      {
+        "region": "gobi",
+        "year": 2020,
+        "kind": "trueColor",
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2020-08-13/GoogleMapsCompatible_Level9/7/46/101.jpeg",
+        "bytes": 8882,
+        "sha256": "828f0efecee7b4c1f3740f7bc45a3487d5a29e7d2bcaa17fcd03f00d4bdb5465",
+        "jpegSignature": true
+      },
+      {
+        "region": "gobi",
+        "year": 2025,
+        "kind": "ndvi",
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_Monthly/default/2025-08-01/GoogleMapsCompatible_Level7/7/46/101.png",
+        "bytes": 27611,
+        "sha256": "10e8b7a895045dec7fdd6c799c467fe95dfc3bcc4c203e8e3e6367ba51d1bbb8",
+        "width": 256,
+        "height": 256,
+        "visiblePixels": 65531,
+        "uniqueVisibleColors": 77
+      },
+      {
+        "region": "gobi",
+        "year": 2025,
+        "kind": "trueColor",
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2025-08-13/GoogleMapsCompatible_Level9/7/46/101.jpeg",
+        "bytes": 6829,
+        "sha256": "8c07fe94911b7cb39248b1a66089391fcf7aadb5cd5b150142532703a211ae96",
+        "jpegSignature": true
+      },
+      {
+        "region": "aral",
+        "year": 2001,
+        "kind": "ndvi",
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_Monthly/default/2001-08-01/GoogleMapsCompatible_Level7/7/46/86.png",
+        "bytes": 25044,
+        "sha256": "6dff2b081339ff0c390c12a2014ea6a1a684cc411795f89e8ecb6127c137eb48",
+        "width": 256,
+        "height": 256,
+        "visiblePixels": 65536,
+        "uniqueVisibleColors": 107
+      },
+      {
+        "region": "aral",
+        "year": 2001,
+        "kind": "trueColor",
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2001-08-13/GoogleMapsCompatible_Level9/7/46/86.jpeg",
+        "bytes": 13011,
+        "sha256": "ab87e544b109eed0eb60730873504b9d92e5bd15b997df3dfb0474d344c8afd7",
+        "jpegSignature": true
+      },
+      {
+        "region": "aral",
+        "year": 2010,
+        "kind": "ndvi",
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_Monthly/default/2010-08-01/GoogleMapsCompatible_Level7/7/46/86.png",
+        "bytes": 25813,
+        "sha256": "122c46cae7603a885182e25bca00d1efe386bb9bb81f6c24c15bd5df66592e7a",
+        "width": 256,
+        "height": 256,
+        "visiblePixels": 65536,
+        "uniqueVisibleColors": 105
+      },
+      {
+        "region": "aral",
+        "year": 2010,
+        "kind": "trueColor",
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2010-08-13/GoogleMapsCompatible_Level9/7/46/86.jpeg",
+        "bytes": 9672,
+        "sha256": "687d798ce75dbac9f9b79a810fbc0372b9b0889c28e237cc7dfbc955cce84328",
+        "jpegSignature": true
+      },
+      {
+        "region": "aral",
+        "year": 2020,
+        "kind": "ndvi",
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_Monthly/default/2020-08-01/GoogleMapsCompatible_Level7/7/46/86.png",
+        "bytes": 27386,
+        "sha256": "cda23dea0a736f24fc45d593ffed18c3facec0d0f89d68226c02d5f46a90dfc8",
+        "width": 256,
+        "height": 256,
+        "visiblePixels": 65536,
+        "uniqueVisibleColors": 114
+      },
+      {
+        "region": "aral",
+        "year": 2020,
+        "kind": "trueColor",
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2020-08-13/GoogleMapsCompatible_Level9/7/46/86.jpeg",
+        "bytes": 6856,
+        "sha256": "774d0a2a8c267c8e0bc142c00cd987e49d23ab49002c774264a2f748138b66a5",
+        "jpegSignature": true
+      },
+      {
+        "region": "aral",
+        "year": 2025,
+        "kind": "ndvi",
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_Monthly/default/2025-08-01/GoogleMapsCompatible_Level7/7/46/86.png",
+        "bytes": 26746,
+        "sha256": "9a7d66b950e30253a00e42a8b18757f564e3efb6b8b39faa58138bd3e3dff2e5",
+        "width": 256,
+        "height": 256,
+        "visiblePixels": 65536,
+        "uniqueVisibleColors": 112
+      },
+      {
+        "region": "aral",
+        "year": 2025,
+        "kind": "trueColor",
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2025-08-13/GoogleMapsCompatible_Level9/7/46/86.jpeg",
+        "bytes": 12661,
+        "sha256": "c2986572378944b4a07f8e4cc140714ce435ca5119429d603b305aa51090f65d",
+        "jpegSignature": true
+      }
+    ],
+    "http": [
+      {
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/1.0.0/WMTSCapabilities.xml",
+        "checkedAt": "2026-09-14T06:47:55.549Z",
+        "status": 200,
+        "contentType": "text/xml; charset=UTF-8",
+        "cors": "*"
+      },
+      {
+        "url": "https://gibs.earthdata.nasa.gov/colormaps/v1.3/MODIS_L3_NDVI.xml",
+        "checkedAt": "2026-09-14T06:47:56.208Z",
+        "status": 200,
+        "contentType": "text/xml",
+        "cors": "*"
+      },
+      {
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_Monthly/default/2001-08-01/GoogleMapsCompatible_Level7/7/46/101.png",
+        "checkedAt": "2026-09-14T06:47:56.696Z",
+        "status": 200,
+        "contentType": "image/png",
+        "cors": "*"
+      },
+      {
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2001-08-13/GoogleMapsCompatible_Level9/7/46/101.jpeg",
+        "checkedAt": "2026-09-14T06:47:57.154Z",
+        "status": 200,
+        "contentType": "image/jpeg",
+        "cors": "*"
+      },
+      {
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_Monthly/default/2010-08-01/GoogleMapsCompatible_Level7/7/46/101.png",
+        "checkedAt": "2026-09-14T06:47:57.669Z",
+        "status": 200,
+        "contentType": "image/png",
+        "cors": "*"
+      },
+      {
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2010-08-13/GoogleMapsCompatible_Level9/7/46/101.jpeg",
+        "checkedAt": "2026-09-14T06:47:58.294Z",
+        "status": 200,
+        "contentType": "image/jpeg",
+        "cors": "*"
+      },
+      {
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_Monthly/default/2020-08-01/GoogleMapsCompatible_Level7/7/46/101.png",
+        "checkedAt": "2026-09-14T06:47:58.816Z",
+        "status": 200,
+        "contentType": "image/png",
+        "cors": "*"
+      },
+      {
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2020-08-13/GoogleMapsCompatible_Level9/7/46/101.jpeg",
+        "checkedAt": "2026-09-14T06:47:59.402Z",
+        "status": 200,
+        "contentType": "image/jpeg",
+        "cors": "*"
+      },
+      {
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_Monthly/default/2025-08-01/GoogleMapsCompatible_Level7/7/46/101.png",
+        "checkedAt": "2026-09-14T06:47:59.828Z",
+        "status": 200,
+        "contentType": "image/png",
+        "cors": "*"
+      },
+      {
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2025-08-13/GoogleMapsCompatible_Level9/7/46/101.jpeg",
+        "checkedAt": "2026-09-14T06:48:00.323Z",
+        "status": 200,
+        "contentType": "image/jpeg",
+        "cors": "*"
+      },
+      {
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_Monthly/default/2001-08-01/GoogleMapsCompatible_Level7/7/46/86.png",
+        "checkedAt": "2026-09-14T06:48:00.793Z",
+        "status": 200,
+        "contentType": "image/png",
+        "cors": "*"
+      },
+      {
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2001-08-13/GoogleMapsCompatible_Level9/7/46/86.jpeg",
+        "checkedAt": "2026-09-14T06:48:01.291Z",
+        "status": 200,
+        "contentType": "image/jpeg",
+        "cors": "*"
+      },
+      {
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_Monthly/default/2010-08-01/GoogleMapsCompatible_Level7/7/46/86.png",
+        "checkedAt": "2026-09-14T06:48:01.675Z",
+        "status": 200,
+        "contentType": "image/png",
+        "cors": "*"
+      },
+      {
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2010-08-13/GoogleMapsCompatible_Level9/7/46/86.jpeg",
+        "checkedAt": "2026-09-14T06:48:02.143Z",
+        "status": 200,
+        "contentType": "image/jpeg",
+        "cors": "*"
+      },
+      {
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_Monthly/default/2020-08-01/GoogleMapsCompatible_Level7/7/46/86.png",
+        "checkedAt": "2026-09-14T06:48:02.555Z",
+        "status": 200,
+        "contentType": "image/png",
+        "cors": "*"
+      },
+      {
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2020-08-13/GoogleMapsCompatible_Level9/7/46/86.jpeg",
+        "checkedAt": "2026-09-14T06:48:03.056Z",
+        "status": 200,
+        "contentType": "image/jpeg",
+        "cors": "*"
+      },
+      {
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_NDVI_Monthly/default/2025-08-01/GoogleMapsCompatible_Level7/7/46/86.png",
+        "checkedAt": "2026-09-14T06:48:03.513Z",
+        "status": 200,
+        "contentType": "image/png",
+        "cors": "*"
+      },
+      {
+        "url": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2025-08-13/GoogleMapsCompatible_Level9/7/46/86.jpeg",
+        "checkedAt": "2026-09-14T06:48:03.910Z",
+        "status": 200,
+        "contentType": "image/jpeg",
+        "cors": "*"
+      },
+      {
+        "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/bands",
+        "checkedAt": "2026-09-14T06:48:04.866Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "https://leejuhan-1214.github.io"
+      },
+      {
+        "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=45&longitude=104.85&startDate=A2001225&endDate=A2001225&kmAboveBelow=0&kmLeftRight=0",
+        "checkedAt": "2026-09-14T06:51:48.959Z",
+        "status": 200,
+        "contentType": "text/csv; charset=utf-8",
+        "cors": "https://leejuhan-1214.github.io"
+      },
+      {
+        "url": "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=PRECTOTCORR&community=AG&longitude=104.85&latitude=45&format=JSON&start=2001&end=2025",
+        "checkedAt": "2026-09-14T06:48:05.494Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "*"
+      },
+      {
+        "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/dates?latitude=45&longitude=104.85",
+        "checkedAt": "2026-09-14T06:48:07.007Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "https://leejuhan-1214.github.io"
+      },
+      {
+        "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=45&longitude=104.85&startDate=A2001225&endDate=A2001225&kmAboveBelow=0&kmLeftRight=0",
+        "checkedAt": "2026-09-14T06:48:09.008Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "https://leejuhan-1214.github.io"
+      },
+      {
+        "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=45&longitude=104.85&startDate=A2010225&endDate=A2010225&kmAboveBelow=0&kmLeftRight=0",
+        "checkedAt": "2026-09-14T06:48:14.274Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "https://leejuhan-1214.github.io"
+      },
+      {
+        "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=45&longitude=104.85&startDate=A2020225&endDate=A2020225&kmAboveBelow=0&kmLeftRight=0",
+        "checkedAt": "2026-09-14T06:48:18.483Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "https://leejuhan-1214.github.io"
+      },
+      {
+        "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=45&longitude=104.85&startDate=A2025225&endDate=A2025225&kmAboveBelow=0&kmLeftRight=0",
+        "checkedAt": "2026-09-14T06:48:22.785Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "https://leejuhan-1214.github.io"
+      },
+      {
+        "url": "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=PRECTOTCORR&community=AG&longitude=-14.65&latitude=15.5&format=JSON&start=2001&end=2025",
+        "checkedAt": "2026-09-14T06:48:23.448Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "*"
+      },
+      {
+        "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/dates?latitude=15.5&longitude=-14.65",
+        "checkedAt": "2026-09-14T06:48:24.949Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "https://leejuhan-1214.github.io"
+      },
+      {
+        "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=15.5&longitude=-14.65&startDate=A2001225&endDate=A2001225&kmAboveBelow=0&kmLeftRight=0",
+        "checkedAt": "2026-09-14T06:48:29.250Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "https://leejuhan-1214.github.io"
+      },
+      {
+        "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=15.5&longitude=-14.65&startDate=A2010225&endDate=A2010225&kmAboveBelow=0&kmLeftRight=0",
+        "checkedAt": "2026-09-14T06:48:33.651Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "https://leejuhan-1214.github.io"
+      },
+      {
+        "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=15.5&longitude=-14.65&startDate=A2020225&endDate=A2020225&kmAboveBelow=0&kmLeftRight=0",
+        "checkedAt": "2026-09-14T06:48:38.495Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "https://leejuhan-1214.github.io"
+      },
+      {
+        "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=15.5&longitude=-14.65&startDate=A2025225&endDate=A2025225&kmAboveBelow=0&kmLeftRight=0",
+        "checkedAt": "2026-09-14T06:48:43.084Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "https://leejuhan-1214.github.io"
+      },
+      {
+        "url": "https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=PRECTOTCORR&community=AG&longitude=62.5&latitude=44.65&format=JSON&start=2001&end=2025",
+        "checkedAt": "2026-09-14T06:48:43.760Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "*"
+      },
+      {
+        "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/dates?latitude=44.65&longitude=62.5",
+        "checkedAt": "2026-09-14T06:48:45.142Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "https://leejuhan-1214.github.io"
+      },
+      {
+        "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=44.65&longitude=62.5&startDate=A2001225&endDate=A2001225&kmAboveBelow=0&kmLeftRight=0",
+        "checkedAt": "2026-09-14T06:48:49.908Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "https://leejuhan-1214.github.io"
+      },
+      {
+        "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=44.65&longitude=62.5&startDate=A2010225&endDate=A2010225&kmAboveBelow=0&kmLeftRight=0",
+        "checkedAt": "2026-09-14T06:48:54.333Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "https://leejuhan-1214.github.io"
+      },
+      {
+        "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=44.65&longitude=62.5&startDate=A2020225&endDate=A2020225&kmAboveBelow=0&kmLeftRight=0",
+        "checkedAt": "2026-09-14T06:48:59.120Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "https://leejuhan-1214.github.io"
+      },
+      {
+        "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1/subset?latitude=44.65&longitude=62.5&startDate=A2025225&endDate=A2025225&kmAboveBelow=0&kmLeftRight=0",
+        "checkedAt": "2026-09-14T06:49:03.501Z",
+        "status": 200,
+        "contentType": "application/json",
+        "cors": "https://leejuhan-1214.github.io"
+      }
+    ]
+  }
+}
