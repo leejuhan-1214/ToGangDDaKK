@@ -2,7 +2,7 @@ import {mkdir,readdir,readFile,writeFile} from 'node:fs/promises';
 import {posix} from 'node:path';
 import {createHash} from 'node:crypto';
 
-const modules=['live-app.mjs','live-viewport.mjs','observation-data.mjs','landcover-data.mjs','unccd-reference.mjs','degradation-data.mjs',
+const modules=['imagery-quality.mjs','imagery-source.mjs','terrain-source.mjs','live-app.mjs','live-viewport.mjs','observation-data.mjs','landcover-data.mjs','unccd-reference.mjs','degradation-data.mjs',
  'app.mjs','model.mjs','viewport.mjs','analysis.worker.mjs','land-mask.mjs','ui-controls.mjs','explanation.mjs','history-view.mjs','presentation.mjs'];
 const styles=['styles.css','ui-controls.css','experiences.css','presentation.css','design.css','live.css'];
 const pages=['index.html','simulation.html'];

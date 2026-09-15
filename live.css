@@ -187,3 +187,65 @@
 @media(max-width:360px) and (min-height:501px){.live-app .live-header{padding:0 8px}.live-app .live-brand{font-size:17px}.live-app .live-header nav button{font-size:10px;padding:4px 6px}.live-app .atlas-section-title h2{font-size:18px}.live-app .atlas-presets b{font-size:12px}}
 @media(prefers-reduced-transparency:reduce){.live-app :is(.atlas-panel,.atlas-map-evidence){backdrop-filter:none;background:#152225}}
 @media(prefers-reduced-motion:reduce){.live-app *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* Map settings use their own compact subviews; analysis tabs keep their layout. */
+.live-app #live-pane-map{grid-template-columns:minmax(0,1fr)}
+.live-app #live-pane-map>:where(.atlas-section-title,.atlas-map-subtabs,[data-map-subpane],#map-source-details){grid-column:1;grid-row:auto;min-width:0}
+.live-app .atlas-map-subtabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;padding:3px;border:1px solid var(--live-line);border-radius:7px;background:#102021}
+.live-app .atlas-map-subtabs button{min-height:31px;padding:4px 8px;font-size:12px;color:#a4bdb3}
+.live-app .atlas-map-subtabs button[aria-selected=true]{background:#2c453e;color:#e1f5ed;box-shadow:0 1px 3px #0002}
+.live-app #live-pane-map [data-map-subpane]{display:grid;gap:10px;min-width:0}
+.live-app #live-pane-map :is(.atlas-map-view-group,.atlas-map-layer-group,.atlas-map-slider){display:grid;min-width:0;gap:4px}
+.live-app #live-pane-map .atlas-map-view-group{gap:8px}
+.live-app #live-pane-map .atlas-map-layer-group{padding-block:6px;border-block:1px solid var(--live-line)}
+.live-app #live-pane-map :is(.atlas-view-buttons,.atlas-map-slider,.atlas-toggle,#official-opacity){grid-column:auto;grid-row:auto}
+.live-app #live-pane-map .atlas-map-slider{gap:0}
+.live-app #live-pane-map .atlas-range-label{margin:0;font-size:11px}
+.live-app #live-pane-map input[type=range]{height:24px;margin:0}
+.live-app #live-pane-map .atlas-view-buttons{padding:3px}
+.live-app #live-pane-map .atlas-view-buttons button{padding:4px 2px;min-height:31px;font-size:11px;white-space:nowrap}
+.live-app #live-pane-map #map-source-details{min-height:27px;margin:0;font-size:11px}
+.live-app #live-pane-map :is(.atlas-imagery-card,.atlas-external-card){min-width:0;display:grid;gap:9px}
+.live-app #live-pane-map .atlas-imagery-card{padding:0 0 12px;border-bottom:1px solid var(--live-line)}
+.live-app #live-pane-map .atlas-imagery-card .atlas-toggle{min-height:30px}
+.live-app #live-pane-map #imagery-quality-status{font-size:11px;line-height:1.5;color:#c4dbcf;overflow-wrap:anywhere}
+.live-app .atlas-imagery-scale{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 10px;border:1px solid #a2c6ba25;background:#112122;border-radius:5px;font-size:11px;color:#9db7a9}
+.live-app .atlas-imagery-scale output{font-size:13px;color:#d9f1e2;font-weight:600}
+.live-app #live-pane-map .atlas-external-card h3{font-size:12px;color:#cce2d5;line-height:1.4}
+.live-app .atlas-external-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.live-app .atlas-external-links a{display:flex;align-items:center;justify-content:center;min-width:0;min-height:36px;padding:6px 5px;border:1px solid #88baa64a;border-radius:6px;background:#20382f;color:#caefdf;font-size:11px;text-decoration:none;white-space:nowrap;transition:background .16s}
+.live-app .atlas-external-links a:hover{background:#2c4b3e}
+@media(max-width:600px) and (max-height:620px) and (min-height:501px){
+ .live-app #live-pane-map{gap:6px}
+ .live-app #live-pane-map [data-map-subpane]{gap:6px}
+ .live-app .atlas-map-subtabs button{min-height:27px;font-size:11px}
+ .live-app #live-pane-map .atlas-map-view-group{gap:6px}
+ .live-app #live-pane-map .atlas-map-layer-group{padding-block:4px;gap:3px}
+ .live-app #live-pane-map .atlas-toggle{min-height:29px}
+ .live-app #live-pane-map .atlas-view-buttons button{min-height:27px}
+ .live-app #live-pane-map #map-source-details{font-size:10px;min-height:25px}
+ .live-app #live-pane-map :is(.atlas-imagery-card,.atlas-external-card){gap:7px}
+ .live-app #live-pane-map .atlas-imagery-card{padding-bottom:9px}
+ .live-app #live-pane-map #imagery-quality-status{font-size:10px}
+ .live-app .atlas-external-links a{min-height:33px}
+}
+@media(max-height:500px){
+ .live-app #live-pane-map{grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;row-gap:7px}
+ .live-app #live-pane-map>.atlas-section-title{grid-column:1;grid-row:1;align-self:center}
+ .live-app #live-pane-map>.atlas-map-subtabs{grid-column:2;grid-row:1}
+ .live-app .atlas-map-subtabs{padding:2px}
+ .live-app .atlas-map-subtabs button{min-height:25px;padding:3px 5px;font-size:11px}
+ .live-app #live-pane-map>[data-map-subpane]{grid-column:1/-1;grid-row:2;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:7px 16px;align-items:start}
+ .live-app #live-pane-map .atlas-map-view-group{grid-column:1;grid-row:1;gap:6px}
+ .live-app #live-pane-map .atlas-map-layer-group{grid-column:2;grid-row:1/3;padding:0;border:0;gap:3px}
+ .live-app #live-pane-map #terrain-detail{grid-column:1;grid-row:2}
+ .live-app #live-pane-map .atlas-view-buttons button{min-height:27px}
+ .live-app #live-pane-map>#map-source-details{grid-column:1/-1;grid-row:3;min-height:24px;font-size:10px}
+ .live-app #live-pane-map :is(.atlas-imagery-card,.atlas-external-card){gap:7px}
+ .live-app #live-pane-map .atlas-imagery-card{padding:0;border:0}
+ .live-app #live-pane-map #imagery-quality-status{font-size:10px}
+ .live-app #live-pane-map .atlas-imagery-card .atlas-toggle{min-height:26px}
+ .live-app .atlas-imagery-scale{padding:5px 8px;font-size:10px}
+ .live-app .atlas-imagery-scale output{font-size:12px}
+ .live-app .atlas-external-links a{min-height:32px;font-size:10px;padding:5px 3px}
+}

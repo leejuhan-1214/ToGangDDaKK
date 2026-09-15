@@ -6,7 +6,7 @@
 
 - 높이: [Mapterhorn 공개 표고](https://mapterhorn.com/data-access/)의 `https://tiles.mapterhorn.com/{z}/{x}/{y}.webp`. 공식 [TileJSON](https://tiles.mapterhorn.com/tilejson.json)은 XYZ, Terrarium 인코딩, 512×512 픽셀을 명시합니다.
 - 전 지구 기본자료는 Copernicus GLO-30입니다. Mapterhorn은 지역에 따라 국가 측량기관의 상세 자료도 결합합니다. 원자료·라이선스는 [공식 출처 목록](https://mapterhorn.com/attribution/)과 [기계 판독 목록](https://download.mapterhorn.com/attribution.json)에 있습니다. 예: Copernicus GLO-30(30 m), swisstopo swissALTI3D, USGS 3DEP. 특정 좌표에 어느 상세자료가 반영됐는지 이 앱이 독립 확인한 것은 아닙니다.
-- 앱은 전 지구 공통 범위를 사용하기 위해 DEM 최대 줌을 12로 제한합니다. 이후 확대는 기존 표고의 보간입니다. 상세 지역의 줌 13–17 원자료를 모두 제공하는 구현은 아닙니다. 512 픽셀은 타일 크기이며 지상 해상도 512 m를 뜻하지 않습니다.
+- 앱은 [공식 지역 목록](https://download.mapterhorn.com/download_urls.json)의 z6 구역별 `max_zoom`을 확인해 실제 제공되는 표고를 최대 L18까지 요청합니다. 상세 자료가 없는 곳은 전 지구 L12를 사용하고, 지역 안에서도 없는 타일은 존재하는 부모로 돌아갑니다. 부모의 Terrarium 값을 먼저 미터 높이로 해독한 뒤 정확한 자식 영역에서 보간합니다. RGB 채널을 직접 보간해 잘못된 높이를 만들지 않습니다. 목록 조회 실패 시에도 기본 표고로 돌아가며, 확대 단계와 새로운 실측 해상도를 구분합니다. 512 픽셀은 타일 크기이며 지상 해상도 512 m를 뜻하지 않습니다.
 - 영상: [Esri World Imagery](https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer). 위성·항공 영상은 지역별로 촬영일과 상세도가 다릅니다. 현재 시점의 생중계 영상이 아닙니다.
 
 MapLibre GL JS 5.14.0이 표고 타일을 해독하여 지형 메시를 만들고 위에 영상을 씌웁니다. 높이 배율은 **1×**입니다. 영상의 밝기·갈색 정도를 높이로 바꾸거나 임의의 산을 추가하지 않습니다. Terrarium 값은 `R×256 + G + B/256 − 32768` m로 읽으므로 해수면 아래의 표고도 보존됩니다.
@@ -15,7 +15,7 @@ MapLibre GL JS 5.14.0이 표고 타일을 해독하여 지형 메시를 만들�
 
 표고와 음영은 같은 원자료를 각각의 지도 소스로 읽습니다. 음영은 DEM의 경사와 방향에서 계산하는 MapLibre의 다방향 hillshade입니다. 북쪽을 기준으로 270°, 315°, 0°, 45°에서 고도각 45°의 약한 조명을 적용합니다. 지도 회전에 따라 광원이 화면에 붙어서 돌지 않습니다. [MapLibre 공식 예제](https://maplibre.org/maplibre-gl-js/docs/examples/add-a-multidirectional-hillshade-layer/)
 
-이것은 지형의 형태를 읽기 위한 시각화입니다. 촬영 당시 태양 위치, 구름, 산이 다른 지형에 드리우는 차폐 그림자를 복원한 결과는 아닙니다. ‘자연색’은 영상에 채도·대비 강화를 더하지 않으며, 나머지 색감은 표시 설정입니다.
+이것은 지형의 형태를 읽기 위한 시각화입니다. 촬영 당시 태양 위치, 구름, 산이 다른 지형에 드리우는 차폐 그림자를 복원한 결과는 아닙니다. 선명도 보정은 위성영상의 근접 확대에서만 적용되며, 표고·경사·공개 황폐화 분류에는 적용되지 않습니다.
 
 ## 소스 일관성 점검
 
@@ -39,3 +39,13 @@ MapLibre GL JS 5.14.0이 표고 타일을 해독하여 지형 메시를 만들�
 현재 제공하는 것은 실제 표고에 근거한 입체 지형입니다. 건물 외벽과 개별 수목까지 촬영해 재구성한 전 세계 사진측량 메시를 제공한다고 표시하지 않습니다. Google의 [Photorealistic 3D Tiles](https://developers.google.com/maps/documentation/tile/overview)를 앱에 넣으려면 [결제가 활성화된 프로젝트와 API 키 또는 OAuth](https://developers.google.com/maps/documentation/tile/usage-and-billing)가 필요합니다. 이 작업에서 새 결제 계정이나 유료 사용을 설정하지 않았습니다.
 
 국가별 실제 3D 도시자료의 예로 일본 국토교통성의 [PLATEAU 및 공개 3D Tiles](https://docs.plateauview.mlit.go.jp/datasets/3d-tiles/)와 스위스 정부의 [공식 3D 지도](https://www.geo.admin.ch/en/map-viewer-help-navigation-and-orientation)가 있습니다. 해당 국가·도시의 제공 범위에 한정되며 이 앱에 이들 건물 메시가 통합되어 있다는 뜻은 아닙니다.
+
+## 근접 확대와 원본 해상도
+
+카메라 최대 확대는 16에서 22로 늘렸습니다. Esri World Imagery의 L0–23 범위에서 [Tilemap 가용성](https://developers.arcgis.com/rest/services-reference/enterprise/tile-map/)을 확인한 타일만 표시합니다. 없는 타일은 HTTP 200인 안내 이미지가 올 수 있으므로 영상 HTTP 상태만으로 원자료라고 판단하지 않습니다. 가용성 조회 실패도 실제 영상 확인으로 바꾸지 않습니다.
+
+더 높은 원본이 없으면 부모 영상의 정확한 자식 영역을 확대 보간합니다. 화면 중앙의 원본 L단계와 확대 보간 여부를 표시합니다. 근접 확대 시 선명도 보정을 켜면 기존 명암을 지역 최솟값·최댓값 범위 안에서만 강화합니다. 새로운 글자·건물·관측 정보를 생성하지 않으며 실제 지상 해상도를 높였다고 표시하지 않습니다. 보정을 끄면 원본 표시로 비교할 수 있습니다. 수정 영상은 서버·영구 캐시·다운로드 파일로 저장하지 않습니다. [Esri 이용 조건](https://www.esri.com/content/dam/arcgisonline/docs/tou_summary.pdf)과 출처 표시는 유지합니다.
+
+2026-09-15 실제 요청 표본에서는 서울 L19, 고비·사헬 L17, 스위스 L21 영상까지 제공됐으며 바로 다음 단계는 없었습니다. 이는 지역 전체의 보장 해상도가 아닙니다. 지형 표본에서는 한국·고비·사헬 L13이 없었고 스위스 7.95°E,46.58°N의 L17 표고가 제공됐습니다.
+
+지도 탭의 화질·실사 화면에서 선택 좌표의 Google Earth와 주변 Street View를 공식 외부 화면으로 엽니다. [Street View URL](https://developers.google.com/maps/documentation/urls/get-started)은 API 키 없이 사용하며 가장 가까운 촬영 지점으로 연결하므로 정확한 선택 위치나 파노라마의 존재를 보장하지 않습니다. Earth 웹 검색 경로는 현재 동작하는 경로이며 공식 안정화 API는 아닙니다. [Google 3D 제공 범위](https://developers.google.com/maps/documentation/javascript/3d/coverage)는 지역별로 다릅니다. Google 영상을 수집·보정·분석하거나 건물 메시로 재구성하지 않습니다.
