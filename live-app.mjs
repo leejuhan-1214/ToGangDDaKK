@@ -1,0 +1,162 @@
+import {createObservationLoader,OBSERVATION_SOURCES} from './observation-data.mjs';
+import {loadLandCoverHistory} from './landcover-data.mjs';
+import {loadUnccdReference,countryReference,getUnccdDataset} from './unccd-reference.mjs';
+import {createHistoryView} from './history-view.mjs';
+import {splitViewportBounds} from './live-viewport.mjs';
+// The global raster reader is loaded independently so a provider outage never
+// substitutes synthetic scores for missing measurements.
+const $=selector=>document.querySelector(selector),$$=selector=>[...document.querySelectorAll(selector)];
+const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const finite=value=>typeof value==='number'&&Number.isFinite(value);
+const number=(value,digits=2)=>finite(value)?new Intl.NumberFormat('ko-KR',{maximumFractionDigits:digits}).format(value):'—';
+const date=value=>value?new Date(value).toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour12:false}):'자료 없음';
+const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+const regions={gobi:{name:'고비 전이지대',center:[104.85,45],zoom:9},sahel:{name:'사헬 서부',center:[-14.65,15.5],zoom:9},aral:{name:'아랄해 동부',center:[62.5,44.65],zoom:9},korea:{name:'한반도 산지',center:[127.6,37.55],zoom:11}};
+const statusClasses={1:['황폐화 지속','#b75c49'],2:['최근 황폐화','#e49368'],3:['기준기간 황폐화','#b79a78'],4:['안정','#b9c8a6'],5:['기준기간 개선','#7da59a'],6:['최근 개선','#56ae9d'],7:['개선 지속','#267d74']};
+let selected=[...regions.sahel.center],region='sahel',view3d=true,mapReady=false,requestId=0,queryController=null,queryTimer=null,gridController=null,gridId=0;
+let observation=null,cover=null,reference=null,degradation=null,gridMetadata=null,requestErrors=[],lastQueryKey='',historyView,activeTab='observe';
+const observationLoader=createObservationLoader();
+let degradationModule=null,degradationInitError=null;
+const degradationReady=import('./degradation-data.mjs').then(module=>{degradationModule=module;return module;}).catch(error=>{degradationInitError=error;return null;});
+const countryReady=loadUnccdReference().catch(()=>null);
+const requestURL=new URL(location.href);
+const cameraParts=requestURL.searchParams.get('camera')?.split(',').map(Number);
+let initialCamera={center:selected,zoom:9,pitch:60,bearing:-15};
+if(cameraParts?.length===5&&cameraParts.every(Number.isFinite)&&Math.abs(cameraParts[1])<=85&&cameraParts[2]>=0&&cameraParts[2]<=16&&cameraParts[4]>=0&&cameraParts[4]<=75){selected=[((cameraParts[0]+180)%360+360)%360-180,cameraParts[1]];initialCamera={center:selected,zoom:cameraParts[2],bearing:cameraParts[3],pitch:cameraParts[4]};view3d=cameraParts[4]>0;region='';}
+const dem={type:'raster-dem',tiles:['https://tiles.mapterhorn.com/{z}/{x}/{y}.webp'],tileSize:512,encoding:'terrarium',maxzoom:12,attribution:'<a href="https://mapterhorn.com/attribution/" target="_blank" rel="noopener">© Mapterhorn · 표고 출처</a>'};
+const shadePaint={'hillshade-method':'multidirectional','hillshade-illumination-anchor':'map','hillshade-illumination-direction':[270,315,0,45],'hillshade-illumination-altitude':[45,45,45,45],'hillshade-exaggeration':.18,'hillshade-shadow-color':Array(4).fill('rgba(24,32,40,0.3)'),'hillshade-highlight-color':Array(4).fill('rgba(255,255,255,0.08)'),'hillshade-accent-color':'rgba(24,32,40,0.08)'};
+let map;
+const terrainErrors=new Set();
+function terrainStatus(){
+ if(!mapReady)return;
+ const loading=!map.isSourceLoaded('dem-shading')||(view3d&&!map.isSourceLoaded('dem'));
+ const status=terrainErrors.size?'partial':loading?'loading':'ready';
+ $('#live-terrain-status').dataset.state=status;
+ $('#live-terrain-status').textContent=status==='partial'?'표고 일부 요청 지연 · 표시되지 않은 지형 확인 필요':status==='loading'?'실제 표고를 불러오는 중…':view3d?'실제 표고 1× · 경사 기반 음영 · 공개 자료':'평면 시점 · 실제 표고 음영';
+}
+function setPanel(collapsed){document.body.classList.toggle('panel-collapsed',collapsed);$('#atlas-panel').classList.toggle('collapsed',collapsed);$('#live-panel-toggle').setAttribute('aria-expanded',String(!collapsed));}
+function setTab(name){activeTab=name;setPanel(false);$$('[data-live-tab]').forEach(button=>{const on=button.dataset.liveTab===name;button.setAttribute('aria-selected',String(on));button.tabIndex=on?0:-1;});$$('[data-live-pane]').forEach(pane=>pane.hidden=pane.dataset.livePane!==name);}
+function coordinateLabel(coordinate){return `${Math.abs(coordinate[1]).toFixed(4)}° ${coordinate[1]<0?'S':'N'} · ${Math.abs(coordinate[0]).toFixed(4)}° ${coordinate[0]<0?'W':'E'}`;}
+function setLocation(coordinate,name){selected=[Number((((coordinate[0]+180)%360+360)%360-180).toFixed(5)),Number(coordinate[1].toFixed(5))];$('#live-coordinate').textContent=coordinateLabel(selected);$('#live-location').textContent=name||'선택 지점';$('#coordinate-lat').value=selected[1];$('#coordinate-lng').value=selected[0];if(mapReady)map.getSource('point').setData({type:'Feature',geometry:{type:'Point',coordinates:selected},properties:{}});}
+function renderChart(rows){
+ const el=$('#observation-chart'),valid=rows.filter(row=>finite(row.nppKgC));
+ if(!valid.length){el.textContent='품질 기준을 통과한 생산성 관측이 없습니다.';el.setAttribute('aria-label','생산성 관측 자료 없음');return;}
+ const W=282,H=92,left=26,right=6,top=8,bottom=18,min=Math.min(0,...valid.map(row=>row.nppKgC)),max=Math.max(.01,...valid.map(row=>row.nppKgC)),span=max-min||1;
+ const first=rows[0].year,last=rows.at(-1).year,x=year=>left+(year-first)/(last-first||1)*(W-left-right),y=value=>H-bottom-(value-min)/span*(H-top-bottom);
+ const bars=rows.map(row=>finite(row.nppKgC)?`<line x1="${x(row.year)}" x2="${x(row.year)}" y1="${y(0)}" y2="${y(row.nppKgC)}" stroke="#81cdb2" stroke-width="5"><title>${row.year}: ${row.nppKgC}</title></line>`:`<circle cx="${x(row.year)}" cy="${H-bottom}" r="1.4" fill="#75857c"><title>${row.year}: 제외 또는 결측</title></circle>`).join('');
+ el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" aria-hidden="true"><line x1="${left}" x2="${W}" y1="${y(0)}" y2="${y(0)}" stroke="#537063"/>${bars}<text x="0" y="12">${number(max,1)}</text><text x="${left}" y="${H-2}">${first}</text><text x="${W-right}" y="${H-2}" text-anchor="end">${last}</text></svg>`;
+ el.setAttribute('aria-label',`연간 생산성. ${valid.map(row=>`${row.year}년 ${row.nppKgC}`).join(', ')}. 단위 kg C/m²/년`);
+}
+const trendLabels={declining:'생산성 감소 신호',increasing:'생산성 증가 신호','no-clear-trend':'뚜렷한 감소 확인 안 됨','insufficient-data':'생산성 판정 자료 부족'};
+function renderObservation(){
+ if(!observation)return;
+ const {trend,quality,period,latestObservation:latest,climate}=observation;
+ const barren=quality.reasonCounts['barren-or-sparse']===quality.totalYears&&quality.totalYears>0,water=quality.reasonCounts.water===quality.totalYears&&quality.totalYears>0;
+ $('#observation-period').textContent=period?`${period.start}–${period.end}`:'자료 미제공';$('#observation-verdict').dataset.state=trend.status;
+ $('#observation-tag').textContent='NASA · 연간 500m 픽셀';$('#observation-title').textContent=water?'수역 · 생산성 분석 제외':barren?'나지·희박 식생 분류':trendLabels[trend.status];
+ $('#observation-description').textContent=water?'원자료의 수역 코드가 확인된 지점입니다. 육지 생산성이나 사막화 위험을 계산하지 않습니다.':barren?'이 제품은 나지·희박 식생을 생산성 결측으로 처리합니다. 이를 사막화 위험으로 바꾸지 않습니다.':trend.status==='declining'?'품질을 통과한 연간 생산성이 감소합니다. 원인과 건조지 여부는 별도 확인이 필요합니다.':trend.status==='increasing'?'연간 생산성이 증가하는 경향입니다. 모든 종류의 토지 황폐화가 없다는 뜻은 아닙니다.':trend.status==='no-clear-trend'?'장기 생산성의 뚜렷한 감소가 확인되지 않았습니다. 현재 상태나 미래 안전을 보장하지 않습니다.':'충분한 기간과 품질의 자료가 없어 추세 판정을 보류합니다.';
+ renderChart(observation.series);$('#latest-year-label').textContent=latest?`${latest.year}년 유효 NPP`:'최근 유효 관측';$('#latest-npp').textContent=latest?number(latest.nppKgC,3):'—';$('#valid-years').innerHTML=`${quality.validYears}<small> / ${quality.totalYears}년</small>`;
+ const rain=climate?.series?.filter(row=>finite(row.precipitationMm)).at(-1);
+ $('#climate-context').textContent=rain?`${rain.year}년 강수 ${number(rain.precipitationMm,0)}mm · NASA 기상 재분석`:'강수 자료 없음 · 기후 요인을 확인하지 못했습니다.';
+ $('#observation-quality').textContent=`품질 제외 ${quality.excludedYears}년 · 사막화 확정 불가 · ${observation.cacheUsed?'캐시 포함':'원자료 조회'}`;
+}
+function renderCountry(){
+ const country=reference?.country,latest=reference?.latest;
+ $('#country-name').textContent=country?.nameKo||country?.name||'국가 미확인';$('#country-year').textContent=latest?`${latest.year} · UN 국가 통계`:'UN 국가 통계';$('#country-percent').textContent=latest?`${number(latest.percent)}%`:'자료 없음';
+ $('#country-detail').textContent=latest?`${latest.natureLabel||'보고값'} · 국가 전체 황폐화 면적 비율. 선택 지점의 위험 확률이 아닙니다.`:'이 국가의 값이 없거나 국가를 확인하지 못했습니다. 0%로 해석하지 않습니다.';
+}
+function renderCover(){/* Annual land-cover labels are described in the evidence dialog, never used as verified change. */}
+function resetResults(){observation=null;cover=null;reference=null;degradation=null;requestErrors=[];$('#live-export').disabled=true;$('#observation-verdict').dataset.state='loading';$('#observation-tag').textContent='자료 조회 중';$('#observation-title').textContent='선택 지점 검증 중';$('#observation-description').textContent='위성 관측과 공개 황폐화 자료를 확인합니다.';$('#observation-chart').textContent='원자료 조회 중…';$('#observation-chart').setAttribute('aria-label','자료 조회 중');$('#latest-npp').textContent='—';$('#valid-years').textContent='—';$('#observation-period').textContent='연간 자료';$('#latest-year-label').textContent='최근 유효 관측';$('#climate-context').textContent='기후 자료 조회 중…';$('#observation-quality').textContent='품질 불충분·결측은 추세에서 제외합니다.';$('#verify-productivity').textContent='조회 중';$('#verify-landcover').textContent='조회 중';$('#official-point-label').textContent='자료 확인 중';$('#official-point-detail').textContent='선택 좌표의 원본 격자를 확인합니다.';$('#country-name').textContent='국가 확인 중';$('#country-year').textContent='UN 국가 통계';$('#country-percent').textContent='—';$('#country-detail').textContent='국가 단위 맥락 자료입니다.';}
+async function queryPoint(coordinate,{force=false,name}={}){
+ const normalized=[Number((((coordinate[0]+180)%360+360)%360-180).toFixed(5)),Number(coordinate[1].toFixed(5))],key=normalized.join(',');if(!force&&key===lastQueryKey)return;
+ lastQueryKey=key;queryController?.abort();const controller=new AbortController();queryController=controller;const id=++requestId;setLocation(normalized,name);resetResults();document.body.dataset.queryState='loading';$('#verify-soil-carbon').textContent='조회 중';$('#query-status').textContent='제공기관 자료 조회 중…';
+ const current=()=>id===requestId&&!controller.signal.aborted;
+ const fail=(source,error)=>{if(current())requestErrors.push({source,message:String(error.message||error)});};
+ const jobs=[
+  observationLoader.load(...normalized,{signal:controller.signal,cache:!force,onProgress:progress=>{if(current())$('#query-status').textContent=`NASA 자료 확인 ${progress.completed}/${progress.total}`;}}).then(result=>{if(current()){observation=result;requestErrors.push(...result.errors);renderObservation();}}).catch(error=>fail('NASA 생산성',error)),
+  loadLandCoverHistory({lng:normalized[0],lat:normalized[1],signal:controller.signal,timeoutMs:45000}).then(result=>{if(current()){cover=result;renderCover();}}).catch(error=>fail('NASA 토지피복',error)),
+  countryReady.then(()=>loadUnccdReference()).then(()=>{if(current()){reference=countryReference(normalized);renderCountry();}}).catch(error=>{fail('UN 국가 통계',error);if(current())renderCountry();}),
+  degradationReady.then(async module=>{if(!module)throw degradationInitError||new Error('황폐화 자료를 읽지 못했습니다.');const result=await module.sampleDegradation(...normalized,{signal:controller.signal});if(current()){degradation=result;requestErrors.push(...result.errors.map(error=>({source:`황폐화 ${error.provider}`,message:error.message})));renderDegradation();}}).catch(error=>{fail('황폐화 격자',error);if(current()){$('#official-point-label').textContent='격자 자료 조회 불가';$('#official-point-detail').textContent='판정값을 만들지 않았습니다. 근거 상세에서 제공 자료를 확인하세요.';for(const name of ['productivity','landcover','soil-carbon'])$('#verify-'+name).textContent='조회 불가';}})
+ ];
+ await Promise.allSettled(jobs);if(!current())return;
+ if(!observation){$('#observation-verdict').dataset.state='error';$('#observation-tag').textContent='자료 조회 실패';$('#observation-title').textContent='관측을 확인하지 못했습니다';$('#observation-description').textContent='연결을 확인하고 다시 조회해주세요. 대체 위험점수는 생성하지 않습니다.';$('#observation-chart').textContent='자료 없음';$('#observation-chart').setAttribute('aria-label','자료 없음');$('#climate-context').textContent='기후 자료 확인 불가';}
+ $('#live-export').disabled=false;$('#query-status').textContent=requestErrors.length?'일부 자료 미확인 · 근거 상세 참조':`조회 완료 · 관측일은 자료별 상이`;document.body.dataset.queryState=requestErrors.length?'partial':'ready';
+}
+function renderDegradation(){
+ const result=degradation;if(!result)return;
+ const primary=result.primary,comparison=result.comparison;
+ $('#official-point-label').textContent=primary?.status?.label||'격자 분류 없음';
+ const valid=primary?.status?.code!=null;
+ $('#official-point-detail').textContent=valid?`2023 상태 · ${comparison?.agreement?.label||'비교 자료 부족'}. 현장 사막화 확정값은 아닙니다.`:'수역·결측 등 유효 분류가 없는 지점입니다. 안전 또는 위험으로 판정하지 않습니다.';
+ $('#verify-productivity').textContent=valid?primary.productivity?.label||'자료 없음':'분류 없음';
+ $('#verify-landcover').textContent=valid?primary.landCover?.label||'자료 없음':'분류 없음';
+ $('#verify-soil-carbon').textContent=valid&&finite(primary?.soilCarbonPercent)?`${primary.soilCarbonPercent>0?'+':''}${number(primary.soilCarbonPercent)}%`:'자료 없음';
+}
+const overlayIds=['degradation','degradation-wrap'];
+const overlayCanvases=overlayIds.map(()=>document.createElement('canvas'));
+let activeOverlayIds=new Set();
+function showOverlay(visible){for(const id of overlayIds)if(map?.getLayer(id))map.setLayoutProperty(id,'visibility',visible&&activeOverlayIds.has(id)?'visible':'none');}
+async function updateViewportRaster(){
+ if(!mapReady)return;gridController?.abort();const controller=new AbortController();gridController=controller;const id=++gridId;
+ gridMetadata=null;
+ const bounds=map.getBounds();
+ $('#map-evidence-note').textContent='이동한 화면의 공개 격자를 조회 중…';
+ try{const windows=splitViewportBounds([bounds.getWest(),bounds.getSouth(),bounds.getEast(),bounds.getNorth()]),module=await degradationReady;if(!module)throw degradationInitError||new Error('격자 자료 미연결');const span=windows.reduce((sum,b)=>sum+b[2]-b[0],0),grids=[];for(const window of windows){const grid=await module.readDegradationGrid(window,{width:Math.max(16,Math.round(192*(window[2]-window[0])/span)),height:128,signal:controller.signal});if(id!==gridId||controller.signal.aborted)return;grids.push(grid);}showOverlay(false);grids.forEach((grid,index)=>drawViewportRaster(grid,index));gridMetadata=grids.map(grid=>({...grid,values:undefined}));}
+ catch(error){if(id!==gridId||controller.signal.aborted)return;gridMetadata=null;activeOverlayIds.clear();$('#map-evidence-country').textContent='황폐화 격자 미확인';$('#map-evidence-period').textContent='원자료 연결을 확인해주세요';$('#map-evidence-note').textContent='자료가 없는 곳에 위험 색상을 생성하지 않습니다.';showOverlay(false);}
+}
+function drawViewportRaster(grid,index){
+ const overlayCanvas=overlayCanvases[index],sourceId=overlayIds[index];
+ if(index===0)activeOverlayIds.clear();activeOverlayIds.add(sourceId);
+ const values=grid.values||grid.data,width=grid.width,height=grid.height;if(!values||!width||!height)throw Error('예상한 황폐화 격자가 아닙니다.');
+ overlayCanvas.width=width;overlayCanvas.height=height;const context=overlayCanvas.getContext('2d'),pixels=context.createImageData(width,height);
+ for(let i=0;i<values.length;i++){const entry=statusClasses[values[i]];if(!entry)continue;const hex=entry[1];pixels.data.set([parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16),255],i*4);}context.putImageData(pixels,0,0);
+ const coordinates=grid.coordinates;
+ if(!map.getSource(sourceId)){map.addSource(sourceId,{type:'canvas',canvas:overlayCanvas,animate:false,coordinates,attribution:'<a href="https://doi.org/10.5281/zenodo.17514520" target="_blank" rel="noopener">© Trends.Earth v1.2 · CC BY 4.0</a>'});map.addLayer({id:sourceId,type:'raster',source:sourceId,paint:{'raster-opacity':Number($('#official-opacity').value)/100,'raster-resampling':'nearest','raster-fade-duration':0}},'point-halo');}else map.getSource(sourceId).setCoordinates(coordinates);
+ map.getSource(sourceId).play();map.getSource(sourceId).pause();map.triggerRepaint();map.setLayoutProperty(sourceId,'visibility',$('#official-layer-toggle').checked?'visible':'none');
+ $('#map-evidence-country').textContent='황폐화 상태 · 2023';$('#map-evidence-period').textContent='Trends.Earth · UNCCD 보고 지원';$('#map-evidence-legend').innerHTML=[1,2,3,4,5,6,7].map(code=>`<span class="legend-item"><i style="background:${statusClasses[code][1]}"></i>${statusClasses[code][0]}</span>`).join('');$('#map-evidence-note').textContent='축소 개요 지도 · 지점 판정은 원본 격자 확인';
+}
+function set3d(enabled){view3d=enabled;$('#live-3d').setAttribute('aria-pressed',String(enabled));$('#live-2d').setAttribute('aria-pressed',String(!enabled));if(mapReady){map.setTerrain(enabled?{source:'dem',exaggeration:1}:null);map.easeTo({pitch:enabled?60:0,duration:reduced.matches?0:650});terrainStatus();}}
+function evidenceHTML(){
+ const country=reference?.country,latest=reference?.latest,trend=observation?.trend,urls=observation?.sourceUrls;
+ const sourceLink=(url,label)=>`<a href="${escape(url)}" target="_blank" rel="noopener">${escape(label)} ↗</a>`;
+ const row=(name,value)=>`<tr><th>${escape(name)}</th><td>${escape(value)}</td></tr>`;
+ const primary=degradation?.primary,comparison=degradation?.comparison,agreement=comparison?.agreement;
+ const primaryValid=primary?.status?.code!=null,comparisonValid=comparison?.status?.code!=null;
+ const primaryLabel=value=>primaryValid?value:'수역·결측: 해석 제외',comparisonLabel=value=>comparisonValid?value:'수역·결측: 해석 제외';
+ const agreementLabel=value=>value==='same'?'일치':value==='different'?'불일치':'비교 불가';
+ const degradationTable=primary?`<p>${escape(degradation.scope)}</p><table>${row('Trends.Earth 2023 상태',primary.status.label)}${row('JRC 방식 2023 상태',comparison?.status?.label||'자료 없음')}${row('상태 분류 대조',agreementLabel(agreement?.status))}${row('Trends.Earth 2008–2023 평가',primaryLabel(primary.sdg.label))}${row('JRC 방식 2008–2023 평가',comparisonLabel(comparison?.sdg?.label||'자료 없음'))}${row('평가기간 판정 대조',primaryValid&&comparisonValid?agreementLabel(agreement?.sdg):'비교 불가')}${row('생산성 2008–2023',primaryLabel(primary.productivity.label))}${row('토지피복 2015–2022/23',primaryLabel(primary.landCover.label))}${row('토양탄소 2015–2022/23',primaryValid&&finite(primary.soilCarbonPercent)?`${primary.soilCarbonPercent}% 변화`:'자료 없음')}${row('원본 격자 간격',`${number(primary.resolutionDegrees?.[0],7)}° · 적도 기준 약 ${number(primary.nominalResolutionMetersAtEquator,0)}m`)}${row('선택 픽셀 경계 W/S/E/N',primary.pixelBounds?.map(value=>value.toFixed(6)).join(' / ')||'자료 없음')}${row('황폐화 자료 조회',date(degradation.checkedAt))}</table><p>2023 상태는 2000–2015 기준기간과 대조한 7개 분류입니다. 평가기간의 변화 없음과 건강한 토지라는 판단은 다릅니다. 토지피복·탄소의 종료 연도는 배포 설명의 2022와 원본 TIFF의 2023이 일치하지 않아 함께 표기합니다. 토양탄소는 지표 아래 0–30cm의 모형 산정 변화율이며 현장 측정값이 아닙니다. 유효 상태가 없는 수역·결측 위치에서는 개별 밴드의 0을 정상 토지 판정에 사용하지 않습니다.</p>`:'<p>원본 격자 결과를 확인하지 못했습니다. 판정값을 추정하지 않습니다.</p>';
+ return `<h3>선택 지점과 시간</h3><p>${escape(coordinateLabel(selected))} · 지점별 위성 픽셀, 국가 통계, 공개 황폐화 격자는 범위와 기준 연도가 다릅니다. 화면 전체의 실시간 사막화 확률을 계산한 것이 아닙니다.</p><table>${row('자료 조회',observation?date(observation.checkedAt):'진행 중 / 실패')}${row('NASA 자료 시각',observation?date(observation.retrievedAt):'없음')}${row('NASA 공개 완료 연도',observation?.latestPublishedYear??'미확인')}${row('유효 관측 기간',trend?.firstYear?`${trend.firstYear}–${trend.lastYear}`:'자료 부족')}${row('범위',observation?.scope||'선택 지점')}${row('임시 저장',observation?.cacheUsed?'12시간 이내 캐시가 포함됨':'새 요청 또는 미확인')}</table>
+ <h3>공개 황폐화 자료 대조</h3>${degradationTable}<p>공개 산정 자료와 국가 보고·현장 검증은 동일하지 않습니다. 서로 다른 생산성 산정 방식의 일치는 독립적인 현장 정답이나 정확도 확률이 아닙니다. 토지피복·탄소 입력은 공유되므로 방법 간 민감도 비교입니다. 지도는 MODE 축소 자료의 개요이며, 클릭한 지점은 원본 해상도로 다시 확인합니다. 축소된 색 면적으로 통계를 계산하지 않습니다. ${sourceLink('https://doi.org/10.5281/zenodo.17514520','Trends.Earth v1.2 · CC BY 4.0')} · ${sourceLink('data/degradation-sources.md','밴드 정의와 원본 식별 정보')}</p>
+ <h3>위성 생산성: 품질과 추세</h3><p>NASA MOD17A3HGF는 위성 입력과 탄소 모형에서 산정한 연간 순일차생산량입니다. 나지·수역·도시·눈 등 제품의 제외 코드를 유효 생산성으로 바꾸지 않습니다. ${escape(observation?.quality?.note||'품질 검사 미완료')}</p><table>${row('유효 / 제공 연도',observation?`${observation.quality.validYears} / ${observation.quality.totalYears}`:'—')}${row('Sen 연간 기울기',trend?.slopePerYear===null||!trend? '미판정':`${number(trend.slopePerYear,5)} kg C/m²/년, 연도당 변화`)}${row('명목 p값',finite(trend?.pValue)?number(trend.pValue,4):'미판정')}</table><p>Sen 기울기와 동률을 보정한 Mann–Kendall 검정으로 기술적 경향을 살핍니다. 최소 15개 유효 연도와 기간 내 70% 이상 자료가 필요합니다. 기후·관개·토지이용 원인을 분리하거나 시계열 자기상관을 보정한 사막화 인과 모형은 아닙니다.</p><ul><li>${sourceLink(OBSERVATION_SOURCES.product,'NASA MOD17 Collection 6.1')}</li><li>${sourceLink(OBSERVATION_SOURCES.methodology,'공식 품질·산정 설명서')}</li>${(urls?.subsets||[]).map((url,i)=>`<li>${sourceLink(url,`선택 지점 생산성 원자료 ${i+1}`)}</li>`).join('')}</ul>
+ <h3>강수와 토지피복</h3><p>NASA POWER 강수는 기상 재분석의 월평균 일강수량에 각 월의 실제 일수를 곱해 연합계로 계산합니다. 관측소 실측이나 500m 격자가 아닙니다. 한 달이라도 누락되면 해당 연도를 제외합니다. ${urls?.rainfall?sourceLink(urls.rainfall,'강수 원자료'):''}</p><p>${escape(cover?.summary?.latest?.accepted?`${cover.summary.latest.year}년 토지피복: ${cover.summary.latest.label}`:'유효한 최근 토지피복 분류를 확인하지 못했습니다.')} MCD12Q1 품질 조건을 통과한 분류만 표시합니다. 공식 안내서는 연도별 분류명 차이만으로 토지피복 변화량을 추정하지 말라고 명시합니다. 따라서 분류명 차이를 독립적인 황폐화 증거로 사용하지 않습니다.</p><p>${sourceLink('https://lpdaac.usgs.gov/documents/1409/MCD12_User_Guide_V61.pdf','토지피복 공식 안내서')}</p>
+ <h3>UN 국가 보고 통계</h3><p>${escape(country?.nameKo||country?.name||'국가 미확인')}: ${latest?`${escape(latest.year)}년 ${number(latest.percent)}%, ${escape(latest.natureLabel||'보고값')}`:'보고 수치 없음'}. UN SDG 15.3.1 국가 전체 통계이며 이 지점의 확률이 아닙니다. 국가 경계는 Natural Earth 일반화 자료이므로 국경 주변 위치는 불확실할 수 있습니다.</p><p>수집 시각: ${escape(date(reference?.asOf))}. ${reference?.sourceUrl?sourceLink(reference.sourceUrl,'UN 통계 원자료'):''} ${sourceLink('https://data.unccd.int/land-degradation','UNCCD 국가 보고 대시보드')}</p>${latest?.source?`<p>${escape(latest.source)}</p>`:''}
+ <h3>사막화 확정에 필요한 확인</h3><p>UNCCD는 토지생산성·토지피복·토양 유기탄소를 통합합니다. 사막화는 건조·반건조·건조 반습윤 지역의 토지 황폐화입니다. 건조지 여부, 자료 간 공간·시기 정합성, 토지이용과 원인 및 현장 대조가 필요합니다. 이 앱은 공개 자료의 분류와 불일치를 보여주며 현재의 현장 검증 완료나 미래 위험확률을 주장하지 않습니다. ${sourceLink('https://prais4-reporting-manual.unccd.int/en/2026/SO1.html','UNCCD 2026 보고 지침')}</p>
+ <h3>실제 3D 지형</h3><p>Mapterhorn의 Terrarium 공개 표고를 높이 배율 1로 표시합니다. 전 지구 기본 표고는 30m급이며 나무·건물 영향이 포함될 수 있습니다. 음영은 실제 표고의 경사와 방향에서 계산한 약한 다방향 조명이며 위성 촬영 당시의 그림자를 재현한 것이 아닙니다. Google의 사진측량 건물 모델은 연결하지 않았습니다.</p><ul><li>${sourceLink('https://mapterhorn.com/attribution/','표고 제공기관과 원자료')}</li><li>${sourceLink('https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9','Esri World Imagery')}</li><li>${sourceLink('https://developers.google.com/maps/documentation/tile/3d-tiles','Google 실사 3D 연결 조건')}</li></ul>
+ ${requestErrors.length?`<h3>이번 조회에서 확인하지 못한 자료</h3><ul>${requestErrors.map(error=>`<li>${escape(error.source)}: ${escape(error.message)}</li>`).join('')}</ul>`:''}`;
+}
+function showEvidence(){const dialog=$('#evidence-dialog');$('#evidence-body').innerHTML=evidenceHTML();if(!dialog.open)dialog.showModal();$('#evidence-close').focus();}
+function exportEvidence(){const data={schemaVersion:1,exportedAt:new Date().toISOString(),coordinate:selected,observation,landCover:cover,nationalReference:reference,degradation,viewportMetadata:gridMetadata,errors:requestErrors,statement:'공개 관측·산정 자료의 대조이며 현장 검증 완료 또는 실시간 사막화 확률이 아닙니다.'};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`LAND15-evidence-${selected[1]}-${selected[0]}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function bindUI(){
+ const tabs=$$('[data-live-tab]');tabs.forEach((button,index)=>{button.addEventListener('click',()=>{if(activeTab===button.dataset.liveTab&&!document.body.classList.contains('panel-collapsed'))setPanel(true);else setTab(button.dataset.liveTab);});button.addEventListener('keydown',event=>{let next;if(event.key==='ArrowRight')next=(index+1)%tabs.length;else if(event.key==='ArrowLeft')next=(index+tabs.length-1)%tabs.length;else if(event.key==='Home')next=0;else if(event.key==='End')next=tabs.length-1;else return;event.preventDefault();setTab(tabs[next].dataset.liveTab);tabs[next].focus();});});
+ $('#live-panel-toggle').addEventListener('click',()=>setPanel(!document.body.classList.contains('panel-collapsed')));$('#atlas-collapse').addEventListener('click',()=>{setPanel(true);$('#live-panel-toggle').focus();});
+ $$('[data-live-region]').forEach(button=>button.addEventListener('click',()=>{region=button.dataset.liveRegion;const target=regions[region];setLocation(target.center,target.name);lastQueryKey='';map.flyTo({center:target.center,zoom:region==='korea'?11:9,pitch:view3d?60:0,bearing:-15,duration:reduced.matches?0:1200});queryPoint(target.center,{name:target.name});}));
+ $('#coordinate-form').addEventListener('submit',event=>{event.preventDefault();const lat=Number($('#coordinate-lat').value),lng=Number($('#coordinate-lng').value);if(!finite(lat)||!finite(lng)||Math.abs(lat)>85||Math.abs(lng)>180)return;region='';map.flyTo({center:[lng,lat],zoom:10,pitch:view3d?60:0,duration:reduced.matches?0:1000});queryPoint([lng,lat]);});
+ $('#live-auto').addEventListener('change',()=>{if($('#live-auto').checked&&mapReady)queryPoint(map.getCenter().toArray());});$('#live-refresh').addEventListener('click',()=>queryPoint(selected,{force:true}));$('#live-export').addEventListener('click',exportEvidence);
+ for(const id of ['live-evidence','verify-details','map-source-details','live-help'])$('#'+id).addEventListener('click',showEvidence);$('#evidence-close').addEventListener('click',()=>$('#evidence-dialog').close());
+ $('#official-layer-toggle').addEventListener('change',()=>showOverlay($('#official-layer-toggle').checked));$('#official-opacity').addEventListener('input',()=>{const value=Number($('#official-opacity').value);$('#official-opacity-value').textContent=`${value}%`;for(const id of overlayIds)if(map?.getLayer(id))map.setPaintProperty(id,'raster-opacity',value/100);});
+ $('#shade-toggle').addEventListener('change',()=>map.setLayoutProperty('terrain-shading','visibility',$('#shade-toggle').checked?'visible':'none'));$('#live-3d').addEventListener('click',()=>set3d(true));$('#live-2d').addEventListener('click',()=>set3d(false));
+ $('#live-world').addEventListener('click',()=>{if(!mapReady)return;$('#live-auto').checked=false;view3d=true;setPanel(true);$('#live-3d').setAttribute('aria-pressed','true');$('#live-2d').setAttribute('aria-pressed','false');map.setTerrain({source:'dem',exaggeration:1});const targetDiameter=Math.min(map.getContainer().clientWidth*.8,map.getContainer().clientHeight*.78),zoom=Math.max(0,Math.min(2.5,.5+Math.log2(targetDiameter/210)));map.flyTo({center:[selected[0],0],zoom,pitch:0,bearing:0,duration:reduced.matches?0:1700});});
+ $('#live-north').addEventListener('click',()=>map.easeTo({bearing:0,duration:reduced.matches?0:500}));$('#live-zoom-in').addEventListener('click',()=>map.zoomIn({duration:reduced.matches?0:350}));$('#live-zoom-out').addEventListener('click',()=>map.zoomOut({duration:reduced.matches?0:350}));$('#live-home').addEventListener('click',()=>map.flyTo({center:selected,zoom:10,pitch:view3d?60:0,duration:reduced.matches?0:900}));$('#live-fullscreen').addEventListener('click',()=>{if(document.fullscreenElement)document.exitFullscreen();else $('.live-shell').requestFullscreen?.();});$('#live-reload').addEventListener('click',()=>location.reload());
+ historyView=createHistoryView({dialog:$('#history-dialog'),regions,onOpen(){clearTimeout(queryTimer);},onClose(){map?.resize();}});$('#live-history').addEventListener('click',()=>historyView.open(['gobi','sahel','aral'].includes(region)?region:'gobi'));
+ if(matchMedia('(max-width:820px),(max-height:600px)').matches)setPanel(true);set3d(view3d);
+}
+function initMap(){
+ try{if(!window.maplibregl)throw Error('MapLibre unavailable');map=new maplibregl.Map({container:'map',...initialCamera,minZoom:0,maxZoom:16,maxPitch:75,attributionControl:{compact:true},renderWorldCopies:false,style:{version:8,projection:{type:'globe'},sources:{satellite:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:18,attribution:'Imagery © Esri, Maxar, Earthstar Geographics'},dem:{...dem},'dem-shading':{...dem}},layers:[{id:'background',type:'background',paint:{'background-color':'#253f3a'}},{id:'satellite',type:'raster',source:'satellite',paint:{'raster-saturation':0,'raster-contrast':0}},{id:'terrain-shading',type:'hillshade',source:'dem-shading',paint:shadePaint}],terrain:view3d?{source:'dem',exaggeration:1}:undefined}});
+ map.on('load',()=>{mapReady=true;map.addSource('point',{type:'geojson',data:{type:'Feature',geometry:{type:'Point',coordinates:selected},properties:{}}});map.addLayer({id:'point-halo',type:'circle',source:'point',paint:{'circle-radius':11,'circle-color':'#142a27','circle-stroke-color':'#e7f4e7','circle-stroke-width':1.5,'circle-opacity':.65}});map.addLayer({id:'point-dot',type:'circle',source:'point',paint:{'circle-radius':3,'circle-color':'#f3fff1'}});terrainStatus();updateViewportRaster();queryPoint(selected,{name:regions[region]?.name});});
+ map.on('movestart',()=>{clearTimeout(queryTimer);gridController?.abort();gridMetadata=null;});map.on('moveend',()=>{clearTimeout(queryTimer);queryTimer=setTimeout(()=>{updateViewportRaster();if($('#live-auto').checked&&!$('#history-dialog').open&&!$('#evidence-dialog').open){const center=map.getCenter().toArray();queryPoint(center,{name:regions[region]?.center.every((value,i)=>Math.abs(value-center[i])<.001)?regions[region].name:null});}},1100);});
+ map.on('click',event=>{if(!mapReady)return;region='';$('#live-auto').checked=false;queryPoint([event.lngLat.lng,event.lngLat.lat]);setTab('verify');});
+ map.on('sourcedataloading',event=>{if(['dem','dem-shading'].includes(event.sourceId))terrainStatus();});map.on('sourcedata',event=>{if(!['dem','dem-shading'].includes(event.sourceId))return;if(event.sourceDataType==='content'&&event.isSourceLoaded)terrainErrors.delete(event.sourceId);terrainStatus();});map.on('error',event=>{if(['dem','dem-shading'].includes(event.sourceId)){terrainErrors.add(event.sourceId);terrainStatus();}else if(!mapReady)$('#live-map-error').hidden=false;});
+ }catch(error){$('#live-map-error').hidden=false;}
+}
+bindUI();setLocation(selected,regions[region]?.name);initMap();
+window.addEventListener('pagehide',()=>{queryController?.abort();gridController?.abort();observationLoader.cancel();clearTimeout(queryTimer);},{once:true});

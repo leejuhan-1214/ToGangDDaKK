@@ -14,6 +14,19 @@ let analysisWorker=null,workerUnavailable=false,workerSequence=0;
 const workerJobs=new Map();
 let resultPage=0;
 let historyView,presentation,storySaved=null,storyCell=null,inspectionReturnTarget=null;
+// Elevation is decoded from the published DEM, never from imagery brightness.
+// Keep separate source caches for terrain geometry and terrain-derived shading.
+const terrainSource={type:'raster-dem',tiles:['https://tiles.mapterhorn.com/{z}/{x}/{y}.webp'],tileSize:512,encoding:'terrarium',maxzoom:12,attribution:'<a href="https://mapterhorn.com/attribution/" target="_blank" rel="noopener">© Mapterhorn · 표고 출처</a>'};
+const terrainGeometry=()=>state.is3d?{source:'dem',exaggeration:1}:null;
+let terrainLoadFailed=false;
+function updateTerrainCaption(){
+ const caption=$('#terrain-caption');
+ const pending=state.ready&&(!map.isSourceLoaded('dem-shading')||(state.is3d&&!map.isSourceLoaded('dem')));
+ const status=terrainLoadFailed?'unavailable':!state.ready||pending?'loading':'ready';
+ caption.dataset.terrainState=status;
+ caption.textContent=status==='unavailable'?'표고 일부 누락 · 새로고침 필요':status==='loading'?'실제 표고 불러오는 중…':state.is3d?'실제 높이 1× · 지형 음영':'평면 지도 · 표고 기반 음영';
+ caption.title='Mapterhorn 공개 표고 · 높이 과장 없음 · 지형의 경사와 방향에서 계산한 음영. 원자료 해상도와 촬영 시기는 지역마다 다릅니다.';
+}
 function setPane(pane){
  $('#inspector-heading').textContent={explore:'지역 탐색',analysis:'위험 분석',restore:'복원 시나리오',layers:'지도 설정'}[pane];
  $('.workspace').classList.remove('panel-collapsed');
@@ -78,8 +91,8 @@ function renderResults(){
  $('#plan-prev')?.addEventListener('click',()=>{resultPage--;renderResults();$('#plan-prev')?.focus();});
  $('#plan-next')?.addEventListener('click',()=>{resultPage++;renderResults();$('#plan-next')?.focus();});
 }
-function initMap(){try{if(!window.maplibregl)throw Error('지도 라이브러리를 읽지 못했습니다.');map=new maplibregl.Map({container:'map',center:regions.gobi.center,zoom:6.4,pitch:55,bearing:-15,maxPitch:75,minZoom:2,maxZoom:16,attributionControl:{compact:true},style:{version:8,sources:{satellite:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:18,attribution:'Imagery © Esri, Maxar, Earthstar Geographics'},dem:{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],tileSize:256,encoding:'terrarium',maxzoom:15,attribution:'Terrain © Mapzen / AWS & source providers'}},layers:[{id:'background',type:'background',paint:{'background-color':'#283728'}},{id:'satellite',type:'raster',source:'satellite',paint:{'raster-saturation':-.22,'raster-contrast':.12}}]}});
- map.on('load',()=>{map.setTerrain({source:'dem',exaggeration:2});['cells','centers','network','sites','route','boundary','selected','drawing'].forEach(id=>map.addSource(id,{type:'geojson',data:featureCollection()}));
+function initMap(){try{if(!window.maplibregl)throw Error('지도 라이브러리를 읽지 못했습니다.');map=new maplibregl.Map({container:'map',center:regions.gobi.center,zoom:6.4,pitch:55,bearing:-15,maxPitch:75,minZoom:2,maxZoom:16,attributionControl:{compact:true},style:{version:8,sources:{satellite:{type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:18,attribution:'Imagery © Esri, Maxar, Earthstar Geographics'},dem:{...terrainSource},'dem-shading':{...terrainSource}},layers:[{id:'background',type:'background',paint:{'background-color':'#283728'}},{id:'satellite',type:'raster',source:'satellite',paint:{'raster-saturation':0,'raster-contrast':0}},{id:'terrain-shading',type:'hillshade',source:'dem-shading',paint:{'hillshade-method':'multidirectional','hillshade-illumination-anchor':'map','hillshade-illumination-direction':[270,315,0,45],'hillshade-illumination-altitude':[45,45,45,45],'hillshade-exaggeration':.18,'hillshade-shadow-color':['rgba(24,32,40,0.30)','rgba(24,32,40,0.30)','rgba(24,32,40,0.30)','rgba(24,32,40,0.30)'],'hillshade-highlight-color':['rgba(255,255,255,0.08)','rgba(255,255,255,0.08)','rgba(255,255,255,0.08)','rgba(255,255,255,0.08)'],'hillshade-accent-color':'rgba(24,32,40,0.08)'}}]}});
+ map.on('load',()=>{['cells','centers','network','sites','route','boundary','selected','drawing'].forEach(id=>map.addSource(id,{type:'geojson',data:featureCollection()}));
  map.addLayer({id:'risk',type:'fill',source:'cells',paint:{'fill-color':['get','color'],'fill-opacity':.4}});
  map.addLayer({id:'zones',type:'fill',source:'cells',layout:{visibility:'none'},paint:{'fill-color':['get','zoneColor'],'fill-opacity':.46}});
  map.addLayer({id:'boundary',type:'line',source:'boundary',paint:{'line-color':'#d2ec96','line-width':1.4,'line-dasharray':[4,3]}});
@@ -89,8 +102,10 @@ function initMap(){try{if(!window.maplibregl)throw Error('지도 라이브러리
  map.addLayer({id:'sites',type:'circle',source:'sites',paint:{'circle-radius':8,'circle-color':'#d2ec96','circle-stroke-width':2.5,'circle-stroke-color':'#17261b'}});
  map.addLayer({id:'selected',type:'line',source:'selected',paint:{'line-color':'#ffffff','line-width':2.5}});
  map.addLayer({id:'drawing',type:'circle',source:'drawing',paint:{'circle-radius':7,'circle-color':'#ffffff','circle-stroke-width':2,'circle-stroke-color':'#182719'}});
- state.ready=true;renderLayers();$('#map-status').hidden=true;$('#map-error').hidden=true;clearTimeout(loadingTimer);bindMap();initViewportAnalysis();map.setTerrain(state.is3d?{source:'dem',exaggeration:2}:null);map.setPaintProperty('risk','fill-opacity',Number($('#opacity').value)/100);if(state.restoredCamera){map.jumpTo(state.restoredCamera);state.restoredCamera=null;}else setRegionCamera(false);applyScene();updateLayerVisibility();viewport.refresh();});
- map.on('error',e=>{if(!state.ready){$('#map-status').textContent='외부 지도 자료를 기다리는 중입니다. 연결 상태를 확인해주세요.';}});
+ state.ready=true;renderLayers();$('#map-status').hidden=true;$('#map-error').hidden=true;clearTimeout(loadingTimer);bindMap();initViewportAnalysis();map.setTerrain(terrainGeometry());map.setPaintProperty('risk','fill-opacity',Number($('#opacity').value)/100);if(state.restoredCamera){map.jumpTo(state.restoredCamera);state.restoredCamera=null;}else setRegionCamera(false);applyScene();updateLayerVisibility();viewport.refresh();});
+ map.on('sourcedataloading',e=>{if(e.sourceId==='dem'||e.sourceId==='dem-shading')updateTerrainCaption();});
+ map.on('sourcedata',e=>{if(e.sourceId==='dem'||e.sourceId==='dem-shading')updateTerrainCaption();});
+ map.on('error',e=>{if(e.sourceId==='dem'||e.sourceId==='dem-shading'){terrainLoadFailed=true;updateTerrainCaption();}if(!state.ready){$('#map-status').textContent='외부 지도 자료를 기다리는 중입니다. 연결 상태를 확인해주세요.';}});
  loadingTimer=setTimeout(()=>{if(!state.ready){$('#map-error').hidden=false;$('#map-error-text').textContent='지도 응답이 지연되고 있습니다. 인터넷 연결 또는 WebGL 지원 상태를 확인해주세요.';}},20000);
  }catch(e){$('#map-error').hidden=false;$('#map-error-text').textContent=e.message;$('#map-status').hidden=true;}}
 
@@ -108,8 +123,8 @@ function regionIdentity(){const r=regions[state.region],live=state.scope==='view
 function selectRegion(key){viewport?.invalidate();cancelDrawing();state.region=key;state.custom=false;state.scope='preset';state.autoViewport=true;state.bounds={...regions[key].bounds};state.focusBounds={...state.bounds};state.selected=null;$('#inspect-panel').hidden=true;regionIdentity();recompute();setRegionCamera();}
 function inspectCell(index){const c=analysis.cells[index];if(!c)return;if(!c.isLand){closeInspection();return toast('수역 · 바다와 호수는 사막화 분석에서 제외됩니다.');}state.selected=index;const chosen=plan.selected.some(p=>p.index===index);const score=c.riskScore*(state.after&&chosen?1-state.effect/200:1);$('#inspect-panel').hidden=false;$('#inspect-title').textContent=chosen?'복원 선정 셀':'선택 셀';$('#cell-id').textContent=c.id;$('#cell-risk').innerHTML=`${(score*100).toFixed(1)}<small>${classInfo[riskClassFromScore(score)].label} · 모의 위험점수</small>`;$('#cell-risk').style.color=classInfo[riskClassFromScore(score)].color;renderExplanation(c);
  const items=[['NDVI',c.ndvi.toFixed(2)],['식생 변화',`${c.ndviTrend.toFixed(1)}%`],['월 강수량',`${c.rainfall.toFixed(1)} mm`],['토양 수분',`${c.moisture.toFixed(1)}%`],['지표 온도',`${c.temperature.toFixed(1)}°C`],['나지 비율',`${c.bareSoil.toFixed(1)}%`],['NB / CA 점수',`${(c.nbRiskScore*100).toFixed(1)} / ${(c.riskScore*100).toFixed(1)}`],['셀의 육지 면적',`${c.area.toFixed(2)} km²`],['가상 비용',`${c.cost.toFixed(2)}억 원`]];$('#cell-metrics').innerHTML=items.map(([label,value])=>`<dt>${label}</dt><dd>${value}</dd>`).join('');if(state.ready)setData('selected',featureCollection([polygon(c)]));}
-function applyScene(){if(!state.ready)return;const settings={day:[-.22,1,.12],dusk:[.05,.82,.18],night:[-.72,.43,.22]}[state.scene];map.setPaintProperty('satellite','raster-saturation',settings[0]);map.setPaintProperty('satellite','raster-brightness-max',settings[1]);map.setPaintProperty('satellite','raster-contrast',settings[2]);}
-function setView(is3d){state.is3d=is3d;pressed($('#view-3d'),is3d);pressed($('#view-2d'),!is3d);$('#terrain-caption').textContent=is3d?'실제 표고 · 높이 2×':'평면 지도 · 지형 강조 없음';if(state.ready){map.setTerrain(is3d?{source:'dem',exaggeration:2}:null);map.easeTo({pitch:is3d?55:0,bearing:is3d?map.getBearing():0,duration:reduced.matches?0:800});}}
+function applyScene(){if(!state.ready)return;const settings={day:[0,1,0,.18],dusk:[.03,.88,.02,.16],night:[-.35,.60,0,.10]}[state.scene];map.setPaintProperty('satellite','raster-saturation',settings[0]);map.setPaintProperty('satellite','raster-brightness-max',settings[1]);map.setPaintProperty('satellite','raster-contrast',settings[2]);map.setPaintProperty('terrain-shading','hillshade-exaggeration',settings[3]);updateTerrainCaption();}
+function setView(is3d){state.is3d=is3d;pressed($('#view-3d'),is3d);pressed($('#view-2d'),!is3d);updateTerrainCaption();if(state.ready){map.setTerrain(terrainGeometry());map.easeTo({pitch:is3d?55:0,bearing:is3d?map.getBearing():0,duration:reduced.matches?0:800});}}
 function stopTour(){const wasTour=state.tour;state.tour=false;cancelAnimationFrame(tourFrame);pressed($('#tour-btn'),false);if(wasTour)viewport?.settle();}
 function toggleTour(){if(state.tour){stopTour();return;}if(!state.ready)return toast('지도를 불러온 뒤 다시 시도해주세요.');if(reduced.matches)return toast('기기의 동작 줄이기 설정으로 자동 회전이 꺼져 있습니다.');state.tour=true;pressed($('#tour-btn'),true);let prev=performance.now();const tick=now=>{if(!state.tour)return;map.setBearing(map.getBearing()+Math.min(now-prev,50)*.002);prev=now;tourFrame=requestAnimationFrame(tick);};tourFrame=requestAnimationFrame(tick);}
 function cancelDrawing(){const wasDrawing=state.drawing;state.drawing=false;state.points=[];$('#draw-btn').textContent='⌗ 구역 직접 지정';$('#draw-btn').classList.remove('active');if(map){map.getCanvas().style.cursor='';if(state.ready)setData('drawing',featureCollection());}$('#map-status').hidden=state.ready;if(wasDrawing)viewport?.refresh();}
@@ -237,7 +252,7 @@ async function startApp(){
  $('#map-status').textContent='위성영상과 지형을 불러오는 중…';
  const cleanUpControls=enhance21stControls();
  window.addEventListener('pagehide',event=>{if(!event.persisted)cleanUpControls();},{once:true});
- restoreSettings();syncControls();bindControls();recompute();regionIdentity();pressed($('#before-btn'),!state.after);pressed($('#after-btn'),state.after);pressed($('#view-3d'),state.is3d);pressed($('#view-2d'),!state.is3d);$('#terrain-caption').textContent=state.is3d?'실제 표고 · 높이 2×':'평면 지도 · 지형 강조 없음';initMap();registerAgentTools();
+ restoreSettings();syncControls();bindControls();recompute();regionIdentity();pressed($('#before-btn'),!state.after);pressed($('#after-btn'),state.after);pressed($('#view-3d'),state.is3d);pressed($('#view-2d'),!state.is3d);updateTerrainCaption();initMap();registerAgentTools();
  }catch(error){
  $('#map-status').hidden=true;$('#map-error').hidden=false;$('#map-error-text').textContent='육지 경계를 불러오지 못해 분석을 중지했습니다. '+error.message;
  $('#retry-btn').addEventListener('click',()=>location.reload());

@@ -1,0 +1,400 @@
+{
+  "schemaVersion": 1,
+  "asOf": "2026-09-15T06:53:10.536Z",
+  "title": "Trends.Earth SDG Indicator 15.3.1 Datasets",
+  "version": "1.2",
+  "publicationDate": "2025-11-03",
+  "doi": "10.5281/zenodo.17514520",
+  "sourceUrl": "https://doi.org/10.5281/zenodo.17514520",
+  "documentationUrl": "https://docs.trends.earth/en/latest/for_users/downloads/index.html",
+  "metadataUrl": "https://api.datacite.org/dois/10.5281/zenodo.17514520",
+  "notebookUrl": "https://github.com/ConservationInternational/trends.earth/blob/main/notebooks/TrendsEarth_Global_Data.ipynb",
+  "listUrl": "https://storage.googleapis.com/storage/v1/b/trendsearth-public/o?prefix=unccd_reporting%2F2016-2023%2F&maxResults=100",
+  "provider": "Conservation International / Trends.Earth, with alternative FAO–WOCAT and JRC productivity datasets",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "baseline": [
+    2000,
+    2015
+  ],
+  "statusYear": 2023,
+  "globalEstimatesNotNationalReports": true,
+  "independentFieldValidation": false,
+  "sources": [
+    {
+      "id": "te",
+      "name": "Trends.Earth",
+      "url": "https://storage.googleapis.com/download/storage/v1/b/trendsearth-public/o/unccd_reporting%2F2016-2023%2FTrendsEarth_SDG15.3.1_2000-2023_Trends.Earth.tif?generation=1762633879111585&alt=media",
+      "directUrl": "https://storage.googleapis.com/trendsearth-public/unccd_reporting/2016-2023/TrendsEarth_SDG15.3.1_2000-2023_Trends.Earth.tif",
+      "objectName": "unccd_reporting/2016-2023/TrendsEarth_SDG15.3.1_2000-2023_Trends.Earth.tif",
+      "generation": "1762633879111585",
+      "bytes": 7795208158,
+      "md5Base64": "/F17dHpTO4v71ULuhmiHEQ==",
+      "updated": "2025-11-08T20:31:19.300Z",
+      "headerSha256": "f1b40bfbdb7ef4b6230caae85fd7e0d971fe35580a705e6c062405c02db8ec64",
+      "rangeVerifiedAt": "2026-09-15T06:53:10.536Z",
+      "crs": "EPSG:4326",
+      "width": 160302,
+      "height": 80152,
+      "pixelSizeDegrees": [
+        0.002245788210298804,
+        0.002245788210298804
+      ],
+      "origin": [
+        -180.00217084365943,
+        90.00220831593487
+      ],
+      "extent": [
+        -180.00217084365943,
+        -90.00220831593487,
+        180.00217084365943,
+        90.00220831593487
+      ],
+      "nominalResolutionMetersAtEquator": 250,
+      "dataType": "Int16",
+      "noData": -32768,
+      "bandCount": 14,
+      "statusBand": 14,
+      "statusYear": 2023,
+      "tileSize": [
+        512,
+        512
+      ],
+      "compression": "LZW",
+      "planarConfiguration": 2,
+      "overviewResampling": "MODE",
+      "bands": [
+        {
+          "band": 1,
+          "description": "SDG Indicator 15.3.1 for baseline (2000-2015)"
+        },
+        {
+          "band": 2,
+          "description": "Land Productivity Dynamics (using Trends.Earth) for 2001 - 2015"
+        },
+        {
+          "band": 3,
+          "description": "Land cover degradation for 2000 - 2015"
+        },
+        {
+          "band": 4,
+          "description": "Soil organic carbon degradation for 2000 - 2015"
+        },
+        {
+          "band": 5,
+          "description": "SDG Indicator 15.3.1 for 2004-2019"
+        },
+        {
+          "band": 6,
+          "description": "Land Productivity Dynamics (using Trends.Earth) for 2004 - 2019"
+        },
+        {
+          "band": 7,
+          "description": "Land cover degradation for 2015 - 2019"
+        },
+        {
+          "band": 8,
+          "description": "Soil organic carbon degradation for 2015 - 2019"
+        },
+        {
+          "band": 9,
+          "description": "SDG Indicator 15.3.1 status in 2019 (compared to 2000-2015 baseline)"
+        },
+        {
+          "band": 10,
+          "description": "SDG Indicator 15.3.1 for 2008-2023"
+        },
+        {
+          "band": 11,
+          "description": "Land Productivity Dynamics (using Trends.Earth) for 2008-2023"
+        },
+        {
+          "band": 12,
+          "description": "Land cover degradation for 2015 - 2023"
+        },
+        {
+          "band": 13,
+          "description": "Soil organic carbon degradation for 2015 - 2023"
+        },
+        {
+          "band": 14,
+          "description": "SDG Indicator 15.3.1 status in 2023 (compared to 2000-2015 baseline)"
+        }
+      ]
+    },
+    {
+      "id": "jrc",
+      "name": "European Commission Joint Research Centre LPD",
+      "url": "https://storage.googleapis.com/download/storage/v1/b/trendsearth-public/o/unccd_reporting%2F2016-2023%2FTrendsEarth_SDG15.3.1_2000-2023_JRC.tif?generation=1762660198768406&alt=media",
+      "directUrl": "https://storage.googleapis.com/trendsearth-public/unccd_reporting/2016-2023/TrendsEarth_SDG15.3.1_2000-2023_JRC.tif",
+      "objectName": "unccd_reporting/2016-2023/TrendsEarth_SDG15.3.1_2000-2023_JRC.tif",
+      "generation": "1762660198768406",
+      "bytes": 3772947632,
+      "md5Base64": "BycF8vwj38o9piKQQ2Qk2A==",
+      "updated": "2025-11-09T03:49:58.890Z",
+      "headerSha256": "18dc1d1b832f24c41a8f761ac1751c391d7233523a7a4d72c88a743b8ced26d1",
+      "rangeVerifiedAt": "2026-09-15T06:53:10.536Z",
+      "crs": "EPSG:4326",
+      "width": 129600,
+      "height": 64800,
+      "pixelSizeDegrees": [
+        0.002777777777777778,
+        0.002777777777777778
+      ],
+      "origin": [
+        -180,
+        90
+      ],
+      "extent": [
+        -180,
+        -90,
+        180,
+        90
+      ],
+      "nominalResolutionMetersAtEquator": 309,
+      "dataType": "Int16",
+      "noData": -32768,
+      "bandCount": 14,
+      "statusBand": 14,
+      "statusYear": 2023,
+      "tileSize": [
+        512,
+        512
+      ],
+      "compression": "LZW",
+      "planarConfiguration": 2,
+      "overviewResampling": "MODE",
+      "bands": [
+        {
+          "band": 1,
+          "description": "SDG Indicator 15.3.1 for baseline (2000-2015)"
+        },
+        {
+          "band": 2,
+          "description": "Land Productivity Dynamics (using JRC) for 2001 - 2015"
+        },
+        {
+          "band": 3,
+          "description": "Land cover degradation for 2000 - 2015"
+        },
+        {
+          "band": 4,
+          "description": "Soil organic carbon degradation for 2000 - 2015"
+        },
+        {
+          "band": 5,
+          "description": "SDG Indicator 15.3.1 for 2004-2019"
+        },
+        {
+          "band": 6,
+          "description": "Land Productivity Dynamics (using JRC) for 2004 - 2019"
+        },
+        {
+          "band": 7,
+          "description": "Land cover degradation for 2015 - 2019"
+        },
+        {
+          "band": 8,
+          "description": "Soil organic carbon degradation for 2015 - 2019"
+        },
+        {
+          "band": 9,
+          "description": "SDG Indicator 15.3.1 status in 2019 (compared to 2000-2015 baseline)"
+        },
+        {
+          "band": 10,
+          "description": "SDG Indicator 15.3.1 for 2008-2023"
+        },
+        {
+          "band": 11,
+          "description": "Land Productivity Dynamics (using JRC) for 2008-2023"
+        },
+        {
+          "band": 12,
+          "description": "Land cover degradation for 2015 - 2023"
+        },
+        {
+          "band": 13,
+          "description": "Soil organic carbon degradation for 2015 - 2023"
+        },
+        {
+          "band": 14,
+          "description": "SDG Indicator 15.3.1 status in 2023 (compared to 2000-2015 baseline)"
+        }
+      ]
+    },
+    {
+      "id": "fao-wocat",
+      "name": "FAO–WOCAT LPD",
+      "url": "https://storage.googleapis.com/download/storage/v1/b/trendsearth-public/o/unccd_reporting%2F2016-2023%2FTrendsEarth_SDG15.3.1_2000-2023_FAO-WOCAT.tif?generation=1762851576592915&alt=media",
+      "directUrl": "https://storage.googleapis.com/trendsearth-public/unccd_reporting/2016-2023/TrendsEarth_SDG15.3.1_2000-2023_FAO-WOCAT.tif",
+      "objectName": "unccd_reporting/2016-2023/TrendsEarth_SDG15.3.1_2000-2023_FAO-WOCAT.tif",
+      "generation": "1762851576592915",
+      "bytes": 8211932522,
+      "md5Base64": "WvbCczQdCxEZ7pxrsKxeVQ==",
+      "updated": "2025-11-11T08:59:36.675Z",
+      "headerSha256": "44d3b54d83fc9b3db673b4e8a093f7bbc716d369e9ee5821b93aa10ecaeb29bf",
+      "rangeVerifiedAt": "2026-09-15T06:53:10.536Z",
+      "crs": "EPSG:4326",
+      "width": 160302,
+      "height": 80152,
+      "pixelSizeDegrees": [
+        0.002245788210298804,
+        0.002245788210298804
+      ],
+      "origin": [
+        -180.00217084365943,
+        90.00220831593487
+      ],
+      "extent": [
+        -180.00217084365943,
+        -90.00220831593487,
+        180.00217084365943,
+        90.00220831593487
+      ],
+      "nominalResolutionMetersAtEquator": 250,
+      "dataType": "Int16",
+      "noData": -32768,
+      "bandCount": 14,
+      "statusBand": 14,
+      "statusYear": 2023,
+      "tileSize": [
+        512,
+        512
+      ],
+      "compression": "LZW",
+      "planarConfiguration": 2,
+      "overviewResampling": "MODE",
+      "bands": [
+        {
+          "band": 1,
+          "description": "SDG Indicator 15.3.1 for baseline (2000-2015)"
+        },
+        {
+          "band": 2,
+          "description": "Land Productivity Dynamics (using FAO-WOCAT) for 2001 - 2015"
+        },
+        {
+          "band": 3,
+          "description": "Land cover degradation for 2000 - 2015"
+        },
+        {
+          "band": 4,
+          "description": "Soil organic carbon degradation for 2000 - 2015"
+        },
+        {
+          "band": 5,
+          "description": "SDG Indicator 15.3.1 for 2004-2019"
+        },
+        {
+          "band": 6,
+          "description": "Land Productivity Dynamics (using FAO-WOCAT) for 2004 - 2019"
+        },
+        {
+          "band": 7,
+          "description": "Land cover degradation for 2015 - 2019"
+        },
+        {
+          "band": 8,
+          "description": "Soil organic carbon degradation for 2015 - 2019"
+        },
+        {
+          "band": 9,
+          "description": "SDG Indicator 15.3.1 status in 2019 (compared to 2000-2015 baseline)"
+        },
+        {
+          "band": 10,
+          "description": "SDG Indicator 15.3.1 for 2008-2023"
+        },
+        {
+          "band": 11,
+          "description": "Land Productivity Dynamics (using FAO-WOCAT) for 2008-2023"
+        },
+        {
+          "band": 12,
+          "description": "Land cover degradation for 2015 - 2023"
+        },
+        {
+          "band": 13,
+          "description": "Soil organic carbon degradation for 2015 - 2023"
+        },
+        {
+          "band": 14,
+          "description": "SDG Indicator 15.3.1 status in 2023 (compared to 2000-2015 baseline)"
+        }
+      ]
+    }
+  ],
+  "statusClasses": {
+    "1": {
+      "label": "Degradation (persistent)",
+      "labelKo": "지속 황폐화",
+      "group": "degraded"
+    },
+    "2": {
+      "label": "Degradation (recent)",
+      "labelKo": "최근 황폐화",
+      "group": "degraded"
+    },
+    "3": {
+      "label": "Degradation (baseline)",
+      "labelKo": "기준기간 황폐화",
+      "group": "degraded"
+    },
+    "4": {
+      "label": "Stability",
+      "labelKo": "안정",
+      "group": "stable"
+    },
+    "5": {
+      "label": "Improvement (baseline)",
+      "labelKo": "기준기간 개선",
+      "group": "improved"
+    },
+    "6": {
+      "label": "Improvement (recent)",
+      "labelKo": "최근 개선",
+      "group": "improved"
+    },
+    "7": {
+      "label": "Improvement (persistent)",
+      "labelKo": "지속 개선",
+      "group": "improved"
+    },
+    "-32768": {
+      "label": "No data",
+      "labelKo": "자료 없음",
+      "group": "no-data"
+    }
+  },
+  "indicatorClasses": {
+    "0": "No change",
+    "1": "Improvement",
+    "-32768": "No data",
+    "-1": "Degradation"
+  },
+  "productivityClasses": {
+    "1": "Declining",
+    "2": "Moderate decline",
+    "3": "Stressed",
+    "4": "Stable",
+    "5": "Increasing",
+    "-32768": "No data"
+  },
+  "soilCarbon": {
+    "band": 13,
+    "unit": "percent change",
+    "depthCm": [
+      0,
+      30
+    ],
+    "classification": false
+  },
+  "caveats": [
+    "These are published global estimates consistent with UNCCD guidance, not locally or nationally validated ground truth.",
+    "The three versions share land-cover and soil-carbon inputs; agreement is a method sensitivity check, not independent validation or accuracy.",
+    "Native-resolution point values and modal-overview display values differ in spatial support; overview values are not area statistics.",
+    "Publication metadata lists land cover and SOC bands 12/13 as 2015–2022; the downloaded TIFF band descriptions say 2015–2023. Retain this source discrepancy and do not claim a more precise verified final year.",
+    "Missing or invalid pixels must remain no data. A degraded-land indicator alone does not establish dryland desertification or predict future risk."
+  ]
+}
