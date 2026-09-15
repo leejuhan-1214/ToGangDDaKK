@@ -38,6 +38,39 @@ test('an aborted range never starts a network request',async()=>{
   await assert.rejects(client.request({headers:{Range:'bytes=0-3'},signal:controller.signal}),{name:'AbortError'});
   assert.equal(called,false);
 });
+test('range fetches bypass the HTTP cache while retaining range, credentials and cancellation',async()=>{
+  const controller=new AbortController();let received;
+  const client=createBoundedRangeClient('https://example.test/file',{fetchImpl:async(url,options)=>{
+    received=options;return new Response(new Uint8Array(4),{status:206,headers:{'content-range':'bytes 0-3/100','content-length':'4'}});
+  }});
+  await client.request({headers:{Range:'bytes=0-3'},signal:controller.signal});
+  assert.equal(received.cache,'no-store');assert.equal(received.credentials,'omit');
+  assert.equal(received.signal,controller.signal);assert.equal(new Headers(received.headers).get('Range'),'bytes=0-3');
+});
+test('one transient fetch rejection retries the same bounded range once and counts its budget',async()=>{
+  const context={requests:0,bytes:0};let calls=0;
+  const client=createBoundedRangeClient('https://example.test/file',{getContext:()=>context,fetchImpl:async(url,options)=>{
+    calls++;assert.equal(options.cache,'no-store');assert.equal(new Headers(options.headers).get('Range'),'bytes=0-3');
+    if(calls===1)throw new TypeError('Failed to fetch');
+    return new Response(new Uint8Array([1,2,3,4]),{status:206,headers:{'content-range':'bytes 0-3/100','content-length':'4'}});
+  }});
+  const response=await client.request({headers:{Range:'bytes=0-3'}});
+  assert.deepEqual([...new Uint8Array(await response.getData())],[1,2,3,4]);
+  assert.equal(calls,2);assert.equal(context.requests,2);assert.equal(context.bytes,8);assert.equal(context.transferredBytes,4);
+});
+test('persistent fetch failures stop after one retry and remain within the original request cap',async()=>{
+  let calls=0;const client=createBoundedRangeClient('https://example.test/file',{fetchImpl:async()=>{calls++;throw new TypeError('Failed to fetch');}});
+  await assert.rejects(client.request({headers:{Range:'bytes=0-3'}}),TypeError);assert.equal(calls,2);
+  const context={requests:159,bytes:0};let cappedCalls=0;
+  const capped=createBoundedRangeClient('https://example.test/file',{getContext:()=>context,fetchImpl:async()=>{cappedCalls++;throw new TypeError('Failed to fetch');}});
+  await assert.rejects(capped.request({headers:{Range:'bytes=0-3'}}),/한도/);assert.equal(cappedCalls,1);
+});
+test('cancellation during retry backoff prevents the second network request',async()=>{
+  const controller=new AbortController();let calls=0;
+  const client=createBoundedRangeClient('https://example.test/file',{fetchImpl:async()=>{calls++;setTimeout(()=>controller.abort(),10);throw new TypeError('Failed to fetch');}});
+  await assert.rejects(client.request({headers:{Range:'bytes=0-3'},signal:controller.signal}),{name:'AbortError'});
+  assert.equal(calls,1);
+});
 test('point sampling selects the containing native pixel and supports wrapped longitudes',()=>{
   const point=pointToDegradationPixel(20.25,60.25,meta);
   assert.deepEqual([point.x,point.y],[200,29]);assert.deepEqual(point.bounds,[20,60,21,61]);

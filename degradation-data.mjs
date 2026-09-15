@@ -6,6 +6,14 @@ const nativeSamples=Array.from({length:14},(_,i)=>i);
 const finite=Number.isFinite;
 const abortError=()=>new DOMException('취소된 지도 자료 요청입니다.','AbortError');
 const checkAbort=signal=>{if(signal?.aborted)throw signal.reason||abortError();};
+function waitForRangeRetry(signal){
+  checkAbort(signal);
+  return new Promise((resolve,reject)=>{
+    const cancel=()=>{clearTimeout(timer);reject(signal.reason||abortError());};
+    const timer=setTimeout(()=>{signal?.removeEventListener('abort',cancel);resolve();},400);
+    signal?.addEventListener('abort',cancel,{once:true});
+  });
+}
 function queue(limit){let active=0;const pending=[];const next=()=>{if(active>=limit||!pending.length)return;const {fn,resolve,reject}=pending.shift();active++;Promise.resolve().then(fn).then(resolve,reject).finally(()=>{active--;next();});};return fn=>new Promise((resolve,reject)=>{pending.push({fn,resolve,reject});next();});}
 const networkQueue=queue(2);
 
@@ -20,11 +28,28 @@ export function createBoundedRangeClient(url,{getContext,fetchImpl=globalThis.fe
     if(!match)fail('단일 바이트 범위가 없는 원본 다운로드는 허용하지 않습니다.');
     const start=Number(match[1]),end=Number(match[2]),length=end-start+1;
     if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||length<1||length>RANGE_LIMIT)fail('COG 요청 범위가 안전 한도를 초과했습니다.');
-    context.requests++;context.bytes+=length;
-    if(context.requests>160||context.bytes>OPERATION_BYTE_LIMIT)fail('지도 부분 읽기 한도를 초과했습니다. 더 좁은 구역을 선택해 주세요.');
+    const reserveAttempt=()=>{
+      context.requests++;context.bytes+=length;
+      if(context.requests>160||context.bytes>OPERATION_BYTE_LIMIT)fail('지도 부분 읽기 한도를 초과했습니다. 더 좁은 구역을 선택해 주세요.');
+    };
+    reserveAttempt();
     return networkQueue(async()=>{
       checkAbort(requestSignal);checkAbort(signal);
-      const response=await fetchImpl(url,{headers,signal:requestSignal,credentials:'omit'});
+      let response;
+      for(let attempt=0;attempt<2;attempt++){
+        try{
+          // Avoid cross-origin/overlapping partial HTTP-cache entries. The bounded
+          // GeoTIFF block cache still handles repeated reads within this reader.
+          response=await fetchImpl(url,{headers,signal:requestSignal,credentials:'omit',cache:'no-store'});
+          break;
+        }catch(error){
+          checkAbort(requestSignal);checkAbort(signal);
+          // Retry only a fetch rejection, before receiving any HTTP response.
+          // HTTP200, range mismatches and body failures never enter this retry.
+          if(attempt!==0||!(error instanceof TypeError))throw error;
+          reserveAttempt();await waitForRangeRetry(requestSignal);checkAbort(signal);
+        }
+      }
       const cancel=async()=>{try{await response.body?.cancel();}catch{ /* response already closed */ }};
       if(response.status!==206){await cancel();throw new Error(`부분 읽기 HTTP 206이 필요합니다 (응답 ${response.status}). 원본 전체 다운로드를 차단했습니다.`);}
       const responseRange=/^bytes (\d+)-(\d+)\/(\d+)$/.exec(response.headers.get('content-range')||'');
