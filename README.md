@@ -1,4 +1,4 @@
-# LAND:15 — 실제 관측 3D 아틀라스
+# LAND:15 — 지구 관측 콘솔
 
 [배포 사이트](https://leejuhan-1214.github.io/ToGangDDaKK/) · [교육용 시뮬레이션](https://leejuhan-1214.github.io/ToGangDDaKK/simulation.html)
 
@@ -28,12 +28,16 @@ node build.mjs
 
 자동 검사는 코드·격자·단위·품질 조건, 좌표 변환, 결측 처리, 요청 취소, 부분 다운로드 제한 등을 검사합니다. 시뮬레이션의 기존 수치·수역 회귀 검사도 포함합니다. 테스트 통과가 위성 자료의 현장 정확도 검증을 뜻하지는 않습니다.
 
-2026-09-15 전체 자동 검사 146개를 통과했습니다. 실제 API 연결과 네 가지 화면 크기의 브라우저 점검은 [검증 기록](VALIDATION.md)에 정리했습니다. 지도 탭의 **지구 전체**로 지구본을 보고, 확대하면 실제 DEM 지형을 탐색할 수 있습니다.
+전체 자동 검사 결과, 실제 API 연결과 화면 크기별 브라우저 점검은 [검증 기록](VALIDATION.md)에 정리했습니다. 첫 화면은 지구본이며, 지역을 검색하거나 확대하면 실제 DEM 지형을 탐색할 수 있습니다.
 
 `main`에 게시한 변경은 GitHub Actions에서 검사한 뒤 `dist/`의 정적 파일로 GitHub Pages에 배포합니다. API 비밀키나 별도의 분석 서버를 요구하지 않습니다.
 
 ## 기본 화면에서 할 수 있는 일
 
+- **관측 콘솔:** 지구본을 넓게 보여주고 탐색·관측·검증·레이어 패널을 필요할 때 펼칩니다. UTC 시계, 커서 좌표, 확대·기울기·방위와 실제 자료 조회 상태를 표시합니다. 시계와 연결 상태는 관측 자료가 실시간이라는 뜻이 아닙니다.
+- **지역 검색:** 등록 지점, 위도·경도 입력, Photon/OpenStreetMap 지명 검색으로 이동합니다. 입력 중에는 등록 지점만 찾고, 검색을 제출할 때 외부 지명 서비스에 질의합니다. 외부 서비스 연결이 실패해도 등록 지점과 좌표 입력은 사용할 수 있습니다.
+- **지도 도구:** 현재 시점의 자동 회전 관찰, 두 지점의 대권거리 측정, 패널을 숨기는 집중 모드, 위성영상의 밝기를 낮추는 저조도 표시를 제공합니다. 거리에는 지형 고도나 이동 경로가 포함되지 않으며, 저조도 표시는 야간 촬영이나 열영상이 아닙니다.
+- **시점 공유:** 위치·확대·방위·기울기와 표고·음영·황폐화 레이어·불투명도·선명도 보정·저조도 표시를 링크에 담습니다. 분석 결과나 측정선을 저장하는 기능은 아닙니다.
 - **3D 지도:** 실제 표고 1배, 지역별 정밀 DEM 자동 선택, 위성·항공 영상과 경사 기반 음영을 표시합니다. 최대 22단계 확대와 카메라 기울기 조절을 지원합니다.
 - **화질·실사:** 존재하는 고해상도 영상을 우선 사용하고 원본 해상도를 넘으면 보간임을 표시합니다. 선명도 보정 켜기/끄기와 선택 좌표의 Google Earth·주변 Street View 연결을 제공합니다. 새 관측 정보를 복원하는 기능은 아닙니다.
 - **화면의 황폐화 개요:** 이동을 멈추면 공개 COG에서 필요한 부분을 읽어 해당 범위의 2023 상태를 표시합니다. 축소 지도는 대표 분류이며 면적 통계가 아닙니다.
@@ -43,6 +47,20 @@ node build.mjs
 - **국가 보고 맥락:** 선택 위치의 UN SDG 15.3.1 국가 비율을 보고 연도·자료 성격과 함께 표시합니다. 국가 비율을 지점 확률로 변환하지 않습니다.
 - **근거 확인·저장:** 출처, 품질, 관측 기간, 원본 픽셀, 불일치 및 실패한 요청을 확인하고 조회 결과를 JSON으로 저장합니다.
 - **연도 비교:** 별도 화면에서 2001·2010·2020·2025년 8월 NASA 식생지도와 고비·사헬·아랄 대표점의 NDVI·강수를 비교합니다. 기본 3D 지도와 별도의 과거 자료 보기입니다.
+
+자동 회전은 버튼 또는 `O`를 눌러 시작합니다. 지도 직접 조작, 다른 위치로 이동, `Esc`, 탭 비활성화 시 멈추며 자동 재개하지 않습니다. 기기의 동작 줄이기 설정이 켜져 있으면 회전을 시작하지 않습니다. 집중 모드에서도 지도 출처와 조작 도구는 유지합니다.
+
+| 단축키 | 동작 |
+| --- | --- |
+| `/` 또는 `Ctrl/⌘ + K` | 지역 검색 |
+| `1` · `2` · `3` · `4` | 탐색 · 관측 · 검증 · 레이어 패널 |
+| `O` | 자동 회전 시작·중지 |
+| `F` | 전체 화면 |
+| `R` | 현재 선택한 지점으로 이동 |
+| `?` | 단축키 안내 |
+| `Esc` | 거리 측정·회전 중지 또는 열린 대화상자 닫기 |
+
+입력창과 대화상자 안에서는 일반 지도 단축키가 작동하지 않습니다. 탭 탐색에는 방향키와 `Home`·`End`도 사용할 수 있습니다.
 
 ## 자료별 범위와 의미
 
@@ -57,7 +75,7 @@ node build.mjs
 
 ### 실제 높이와 음영
 
-Mapterhorn의 Terrarium 타일을 `R×256 + G + B/256 − 32768` m로 해독합니다. 위성영상의 색이나 밝기를 높이로 바꾸거나 임의의 굴곡을 추가하지 않습니다. Copernicus GLO-30을 전 지구 기본으로 사용하며 지역에 따라 공개 측량 자료가 결합됩니다. 앱은 공통 범위를 위해 DEM 최대 줌을 12로 제한하므로 이후 확대가 새로운 표고 정밀도를 만들지는 않습니다.
+Mapterhorn의 Terrarium 타일을 `R×256 + G + B/256 − 32768` m로 해독합니다. 위성영상의 색이나 밝기를 높이로 바꾸거나 임의의 굴곡을 추가하지 않습니다. Copernicus GLO-30을 전 지구 기본으로 사용하며 지역에 따라 공개 측량 자료가 결합됩니다. 앱은 공식 지역 목록의 제공 범위를 확인해 실제 표고를 최대 L18까지 선택합니다. 정밀 자료가 없는 곳은 전 지구 L12를 사용하고, 요청한 지역 타일이 없으면 존재하는 부모 타일로 돌아갑니다. 원본보다 확대할 때는 높이를 미터 단위로 해독한 뒤 정확한 영역을 보간하며, 새로운 실측 정밀도가 생긴 것으로 표시하지 않습니다.
 
 음영은 같은 표고의 경사·방향에서 계산한 약한 다방향 조명입니다. 촬영 당시 태양이나 지형이 드리우는 실제 그림자의 복원이 아닙니다. 표고의 원자료 시기·수평/수직 오차·보간과 수목·건물의 영향이 남습니다. 평탄한 곳은 실제로 평탄하게 표시합니다. Google Earth의 사진측량 건물 메시나 일본 PLATEAU·스위스 도시 메시를 통합했다고 주장하지 않습니다. [표고 출처와 점검 범위](data/terrain-sources.md)
 
@@ -114,7 +132,9 @@ MCD12Q1은 토지피복·품질·육지/수역 밴드의 날짜·타일·처리 
 
 | 파일 | 역할 |
 | --- | --- |
-| `index.html`, `live-app.mjs`, `live.css` | 실제 자료를 기본으로 보는 지도·조회·근거 UI |
+| `index.html`, `live-app.mjs`, `live.css`, `console.css` | 실제 자료를 기본으로 보는 지도·조회·근거 UI와 관측 콘솔 스타일 |
+| `atlas-console.mjs`, `camera-orbit.mjs` | 검색·거리 측정·표시 모드·시점 공유·단축키·회전 제어 |
+| `terrain-source.mjs`, `imagery-source.mjs`, `imagery-quality.mjs` | 지역별 실제 표고·영상 가용성 확인, 확대 보간·선명도 보정 |
 | `degradation-data.mjs` | COG 원본 지점·축소 지도 부분 읽기, 분류와 방법 비교 |
 | `observation-data.mjs`, `landcover-data.mjs` | NASA 연간 자료·품질 검사·생산성 추세·토지피복 |
 | `unccd-reference.mjs`, `data/unccd-reference.json`, `data/country-boundaries.json` | UN 국가 보고와 좌표별 국가 맥락 |
@@ -140,6 +160,8 @@ node build.mjs
 
 - [원본 과제 저장소](https://github.com/leejuhan-1214/ToGangDDaKK), [지도 중심 탐색 참고: 서울 3D Atlas](https://seoul-3d-atlas.synabreu.chatgpt.site/). 제공된 [X 게시물](https://x.com/synabreu/status/2096557555086725159)은 접근 제한으로 원문을 확인하지 못했습니다.
 - UI는 [Taste Skill의 Redesign Skill](https://github.com/Leonxlnx/taste-skill/blob/main/skills/redesign-skill/SKILL.md)을 참고했습니다. [DESIGN.md](DESIGN.md)는 디자인 작업의 배경입니다.
+- 관측 콘솔은 [OSIRIS](https://osirisai.live/)의 지도 중심 화면·양옆 도구 모음·좌표 표시와 [God’s Eye View](https://github.com/bilawalsidhu/gods-eye-view)의 회전 관찰·현재 시점 공유 흐름을 참고해 새로 작성했습니다. 두 참고 프로젝트의 코드·로고·자산을 복제하지 않았습니다. 지도 렌더러는 기존 MapLibre를 유지합니다.
+- 지명 검색: [Photon](https://github.com/komoot/photon)의 공개 서비스와 [OpenStreetMap 기여자](https://www.openstreetmap.org/copyright)의 자료. 검색어를 제출하면 Photon에 전송하며 서비스의 응답·제공 범위에 따라 결과가 달라질 수 있습니다.
 - 교육용 화면의 Dock은 [21st.dev Motion Primitives](https://21st.dev/@ibelick/components/dock)의 MIT 공개 소스를 vanilla HTML/CSS/JS로 포팅했습니다. 거리 보간·스프링·아이콘 비율을 참고했으며 원본과 라이선스는 `vendor/ui/`에 있습니다. [Expandable Tabs](https://21st.dev/@victorwelander/components/expandable-tabs)는 공개 미리보기를 참고해 작성했습니다.
 - [MapLibre GL JS](https://maplibre.org/) 5.14.0, [GeoTIFF.js](https://github.com/geotiffjs/geotiff.js), polygon-clipping 및 관련 라이선스는 `vendor/`에 포함됩니다.
 - [SUIT](https://github.com/sun-typeface/SUIT) 한글 가변 글꼴은 SIL OFL 1.1이며 `vendor/fonts/`에 라이선스와 출처를 보관합니다.

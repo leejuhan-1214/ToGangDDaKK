@@ -33,6 +33,8 @@ jobs:
           node --check imagery-quality.mjs
           node --check imagery-source.mjs
           node --check terrain-source.mjs
+          node --check atlas-console.mjs
+          node --check camera-orbit.mjs
           node --check live-app.mjs
           node --check live-viewport.mjs
           node --check observation-data.mjs
@@ -48,7 +50,7 @@ jobs:
           node --check history-view.mjs
           node --check explanation.mjs
           node --check presentation.mjs
-          node --test imagery-quality.test.mjs imagery-source.test.mjs terrain-source.test.mjs model.test.mjs viewport.test.mjs water.test.mjs land-mask.test.mjs explanation.test.mjs presentation.test.mjs history.test.mjs observation-data.test.mjs landcover.test.mjs unccd-reference.test.mjs degradation-data.test.mjs live-viewport.test.mjs
+          node --test atlas-console.test.mjs camera-orbit.test.mjs imagery-quality.test.mjs imagery-source.test.mjs terrain-source.test.mjs model.test.mjs viewport.test.mjs water.test.mjs land-mask.test.mjs explanation.test.mjs presentation.test.mjs history.test.mjs observation-data.test.mjs landcover.test.mjs unccd-reference.test.mjs degradation-data.test.mjs live-viewport.test.mjs
           node build.mjs
       - name: Configure Pages
         uses: actions/configure-pages@v5

@@ -2,9 +2,9 @@ import {mkdir,readdir,readFile,writeFile} from 'node:fs/promises';
 import {posix} from 'node:path';
 import {createHash} from 'node:crypto';
 
-const modules=['imagery-quality.mjs','imagery-source.mjs','terrain-source.mjs','live-app.mjs','live-viewport.mjs','observation-data.mjs','landcover-data.mjs','unccd-reference.mjs','degradation-data.mjs',
+const modules=['atlas-console.mjs','camera-orbit.mjs','imagery-quality.mjs','imagery-source.mjs','terrain-source.mjs','live-app.mjs','live-viewport.mjs','observation-data.mjs','landcover-data.mjs','unccd-reference.mjs','degradation-data.mjs',
  'app.mjs','model.mjs','viewport.mjs','analysis.worker.mjs','land-mask.mjs','ui-controls.mjs','explanation.mjs','history-view.mjs','presentation.mjs'];
-const styles=['styles.css','ui-controls.css','experiences.css','presentation.css','design.css','live.css'];
+const styles=['console.css','styles.css','ui-controls.css','experiences.css','presentation.css','design.css','live.css'];
 const pages=['index.html','simulation.html'];
 async function tree(directory){
  const entries=await readdir(directory,{withFileTypes:true}),files=[];
@@ -53,7 +53,7 @@ for(const path of files){
  deployed.push({path,bytes:content.byteLength,sha256:createHash('sha256').update(content).digest('hex')});
 }
 const html=await readFile('dist/index.html','utf8'),simulation=await readFile('dist/simulation.html','utf8');
-if(!html.includes('class="live-app"')||!html.includes(`live-app.mjs?v=${version}`))throw new Error('Default page must load the observed-data atlas.');
+if(!/<body[^>]*class="[^"]*\blive-app\b[^"]*"/.test(html)||!html.includes(`live-app.mjs?v=${version}`))throw new Error('Default page must load the observed-data atlas.');
 if(!simulation.includes('교육용')||!simulation.includes(`app.mjs?v=${version}`))throw new Error('Simulation page must retain its notice and separate entry point.');
 for(const path of ['vendor/geotiff/geotiff.js','data/degradation-cogs.json','data/unccd-reference.json','data/country-boundaries.json'])if(!fileSet.has(path))throw new Error(`Missing deployment dependency: ${path}`);
 const degradation=await readFile('dist/degradation-data.mjs','utf8');
