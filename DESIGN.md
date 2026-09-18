@@ -45,6 +45,22 @@ SIL licence remain in `vendor/fonts/`.
 
 ## Map interactions
 
+Hand navigation is an explicitly started camera session, opened from the right
+tool rail or H. Its compact panel explains the five hand shapes before permission
+is requested and retains a camera-off action, status and mirrored preview.
+Open palm translates the map; Victory changes bearing/pitch; thumbs adjust zoom;
+a fist or missing hand stops movement. Tracking must settle before changing the
+camera, and manual navigation temporarily takes ownership. Opening analysis or
+measurement closes hand control so panels and input modes do not compete.
+
+The pinned Google MediaPipe runtime/model is served from the same site and loaded
+only after opt-in. Inference runs in a classic worker with one frame in flight.
+Video and landmarks are neither recorded nor transmitted to a recognition server.
+Stopping, closing, page hiding, errors and cancelled starts release camera tracks.
+This input mode does not provide an environmental measurement or replace the
+existing scientific data pipeline. Sources and licence are in
+[vendor/mediapipe/SOURCES.md](vendor/mediapipe/SOURCES.md).
+
 Search combines local landmarks, explicit latitude/longitude input and
 [Photon](https://github.com/komoot/photon) / OpenStreetMap geocoding. Typing
 filters local landmarks; submitting a place name sends the query to Photon.
