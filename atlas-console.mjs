@@ -92,7 +92,7 @@ export function cameraShareURL(href,camera,display={}){
  if(![lng,lat,zoom,bearing,pitch].every(Number.isFinite)||Math.abs(lat)>85||zoom<0||zoom>22||pitch<0||pitch>75)throw new RangeError('Invalid camera');
  const url=new URL(href);
  url.searchParams.set('camera',[wrapLongitude(lng).toFixed(5),lat.toFixed(5),zoom.toFixed(2),bearing.toFixed(1),pitch.toFixed(1)].join(','));
- for(const key of ['night','quality','overlay','shade','terrain'])if(typeof display[key]==='boolean')url.searchParams.set(key,display[key]?'1':'0');
+ for(const key of ['night','quality','overlay','shade','terrain','buildings'])if(typeof display[key]==='boolean')url.searchParams.set(key,display[key]?'1':'0');
  if(Number.isFinite(display.opacity))url.searchParams.set('opacity',String(clamp(display.opacity,0,85)));
  return url.href;
 }
@@ -190,7 +190,7 @@ export function createAtlasConsole({map,selectLocation,onTab=()=>{},onHistory=()
  function openShortcuts(){const dialog=$('console-shortcuts-dialog');if(dialog&&!document.querySelector('dialog[open]'))dialog.showModal();else if(!dialog)onHelp();}
  listen($('console-focus-trigger'),'click',toggleFocus);listen($('console-night-trigger'),'click',toggleLowLight);
  listen($('console-shortcuts-trigger'),'click',openShortcuts);listen($('console-shortcut-footer'),'click',openShortcuts);listen($('console-shortcuts-close'),'click',()=>$('console-shortcuts-dialog')?.close());
- listen($('console-share-trigger'),'click',async()=>{const url=cameraShareURL(location.href,camera(),{night:lowLight,terrain:$('live-3d')?.getAttribute('aria-pressed')==='true',quality:$('imagery-quality-toggle')?.checked,overlay:$('official-layer-toggle')?.checked,shade:$('shade-toggle')?.checked,opacity:Number($('official-opacity')?.value)});history.replaceState(history.state,'',url);try{if(!navigator.clipboard?.writeText)throw new Error('Clipboard unavailable');await navigator.clipboard.writeText(url);announce('현재 위치·시점·지도 표시의 링크를 복사했습니다.');}catch{announce('링크 복사가 차단되었습니다. 현재 시점을 반영한 브라우저 주소를 직접 복사해주세요.');}});
+ listen($('console-share-trigger'),'click',async()=>{const url=cameraShareURL(location.href,camera(),{night:lowLight,terrain:$('live-3d')?.getAttribute('aria-pressed')==='true',quality:$('imagery-quality-toggle')?.checked,overlay:$('official-layer-toggle')?.checked,shade:$('shade-toggle')?.checked,buildings:$('real-buildings-toggle')?.checked,opacity:Number($('official-opacity')?.value)});history.replaceState(history.state,'',url);try{if(!navigator.clipboard?.writeText)throw new Error('Clipboard unavailable');await navigator.clipboard.writeText(url);announce('현재 위치·시점·지도 표시의 링크를 복사했습니다.');}catch{announce('링크 복사가 차단되었습니다. 현재 시점을 반영한 브라우저 주소를 직접 복사해주세요.');}});
  listen(document,'keydown',event=>{
   if(event.defaultPrevented||event.isComposing)return;
   const input=event.target?.closest?.('input,textarea,select,[contenteditable="true"],[role="textbox"]'),dialog=document.querySelector('dialog[open]');

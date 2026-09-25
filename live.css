@@ -198,6 +198,8 @@
 .live-app #live-pane-map :is(.atlas-map-view-group,.atlas-map-layer-group,.atlas-map-slider){display:grid;min-width:0;gap:4px}
 .live-app #live-pane-map .atlas-map-view-group{gap:8px}
 .live-app #live-pane-map .atlas-map-layer-group{padding-block:6px;border-block:1px solid var(--live-line)}
+.live-app #real-buildings-status{margin:0;font-size:10px;line-height:1.35;color:#a9c9b8}
+.live-app #real-buildings-status[data-state=error]{color:#efae99}
 .live-app #live-pane-map :is(.atlas-view-buttons,.atlas-map-slider,.atlas-toggle,#official-opacity){grid-column:auto;grid-row:auto}
 .live-app #live-pane-map .atlas-map-slider{gap:0}
 .live-app #live-pane-map .atlas-range-label{margin:0;font-size:11px}

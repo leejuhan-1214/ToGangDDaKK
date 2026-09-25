@@ -47,9 +47,9 @@ test('remote geocoding excludes malformed and unmappable coordinates, deduplicat
 });
 
 test('shared camera URL preserves deployment version and encodes the actual view including wraparound',()=>{
- const url=new URL(cameraShareURL('https://example.org/app/?v=abc',{lng:487.6,lat:37.55,zoom:13.125,bearing:-25,pitch:65},{night:true,quality:false,overlay:true,shade:false,opacity:30}));
+ const url=new URL(cameraShareURL('https://example.org/app/?v=abc',{lng:487.6,lat:37.55,zoom:13.125,bearing:-25,pitch:65},{night:true,quality:false,overlay:true,shade:false,buildings:true,opacity:30}));
  assert.equal(url.searchParams.get('v'),'abc');assert.equal(url.searchParams.get('camera'),'127.60000,37.55000,13.13,-25.0,65.0');
- assert.equal(url.searchParams.get('night'),'1');assert.equal(url.searchParams.get('quality'),'0');assert.equal(url.searchParams.get('overlay'),'1');assert.equal(url.searchParams.get('shade'),'0');assert.equal(url.searchParams.get('opacity'),'30');
+ assert.equal(url.searchParams.get('night'),'1');assert.equal(url.searchParams.get('quality'),'0');assert.equal(url.searchParams.get('overlay'),'1');assert.equal(url.searchParams.get('shade'),'0');assert.equal(url.searchParams.get('buildings'),'1');assert.equal(url.searchParams.get('opacity'),'30');
  assert.throws(()=>cameraShareURL('https://example.org',{lng:0,lat:0,zoom:23,bearing:0,pitch:0}),RangeError);
  const globe=new URL(cameraShareURL('https://example.org/app/',{lng:20,lat:18,zoom:1.5,bearing:0,pitch:0},{terrain:true}));
  assert.equal(globe.searchParams.get('terrain'),'1','a level camera can still have measured 3D terrain enabled');
